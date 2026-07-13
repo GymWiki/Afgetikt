@@ -8,10 +8,13 @@ import {
   unique,
 } from "drizzle-orm/pg-core";
 
-// Fase 2 (restaurant-dashboard) leunt op deze tabel; in fase 1 blijft
-// bills.restaurantId simpelweg null voor niet-partnerrestaurants.
+// bills.restaurantId blijft null voor niet-partnerrestaurants (bon buiten
+// een QR-scan om verwerkt).
 export const restaurants = pgTable("restaurants", {
   id: text("id").primaryKey(),
+  // Supabase Auth user id (auth.users.id) van de restauranteigenaar.
+  // Eén restaurant per account in deze versie — geen medewerkersbeheer.
+  ownerUserId: text("owner_user_id").notNull().unique(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   createdAt: timestamp("created_at", { withTimezone: true })

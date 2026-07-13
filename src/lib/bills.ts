@@ -15,13 +15,19 @@ export type DraftItemInput = {
   quantity: number;
 };
 
+export type CreateDraftBillOptions = {
+  title?: string | null;
+  serviceCents?: number;
+  restaurantId?: string | null;
+};
+
 export async function createDraftBill(
   items: DraftItemInput[],
-  title: string | null,
-  serviceCents = 0,
+  options: CreateDraftBillOptions = {},
 ) {
   const billId = createBillId();
   const managerToken = createSecretToken();
+  const { title = null, serviceCents = 0, restaurantId = null } = options;
 
   await db.transaction(async (tx) => {
     await tx.insert(bills).values({
@@ -29,6 +35,7 @@ export async function createDraftBill(
       managerToken,
       title,
       serviceCents,
+      restaurantId,
       status: "draft",
     });
 

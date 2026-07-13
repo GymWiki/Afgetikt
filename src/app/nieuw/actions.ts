@@ -25,6 +25,8 @@ export async function scanReceiptAction(
     return { ok: false, error: "Gebruik een JPEG-, PNG- of WEBP-foto." };
   }
 
+  const restaurantId = formData.get("restaurantId");
+
   const buffer = Buffer.from(await file.arrayBuffer());
   const base64Image = buffer.toString("base64");
 
@@ -36,8 +38,11 @@ export async function scanReceiptAction(
         priceCents: item.priceCents,
         quantity: item.quantity,
       })),
-      parsed.restaurantName,
-      parsed.serviceCents,
+      {
+        title: parsed.restaurantName,
+        serviceCents: parsed.serviceCents,
+        restaurantId: typeof restaurantId === "string" ? restaurantId : null,
+      },
     );
     return { ok: true, billId, managerToken };
   } catch (err) {
@@ -52,7 +57,10 @@ export async function scanReceiptAction(
   }
 }
 
-export async function startManualBillAction() {
-  const { billId, managerToken } = await createDraftBill([], null);
+export async function startManualBillAction(formData: FormData) {
+  const restaurantId = formData.get("restaurantId");
+  const { billId, managerToken } = await createDraftBill([], {
+    restaurantId: typeof restaurantId === "string" ? restaurantId : null,
+  });
   redirect(`/nieuw/${billId}/controleren?key=${managerToken}`);
 }

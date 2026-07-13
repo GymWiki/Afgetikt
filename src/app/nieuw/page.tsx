@@ -4,7 +4,13 @@ import Link from "next/link";
 import { ReceiptUploader } from "./receipt-uploader";
 import { startManualBillAction } from "./actions";
 
-export default function NieuwePage() {
+export default async function NieuwePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ restaurantId?: string }>;
+}) {
+  const { restaurantId } = await searchParams;
+
   return (
     <PageShell className="gap-6">
       <Link
@@ -24,9 +30,12 @@ export default function NieuwePage() {
         </p>
       </div>
 
-      <ReceiptUploader />
+      <ReceiptUploader restaurantId={restaurantId} />
 
       <form action={startManualBillAction} className="text-center">
+        {restaurantId && (
+          <input type="hidden" name="restaurantId" value={restaurantId} />
+        )}
         <button
           type="submit"
           className="text-sm text-muted underline underline-offset-4 hover:text-foreground"

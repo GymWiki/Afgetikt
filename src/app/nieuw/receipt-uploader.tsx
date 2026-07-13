@@ -6,7 +6,11 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { scanReceiptAction } from "./actions";
 
-export function ReceiptUploader() {
+export function ReceiptUploader({
+  restaurantId,
+}: {
+  restaurantId?: string;
+}) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +42,7 @@ export function ReceiptUploader() {
     if (!file) return;
     const formData = new FormData();
     formData.set("photo", file);
+    if (restaurantId) formData.set("restaurantId", restaurantId);
 
     startTransition(async () => {
       const result = await scanReceiptAction(formData);
