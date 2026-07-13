@@ -7,24 +7,34 @@ import { useRef, useState, useTransition } from "react";
 import { scanReceiptAction } from "./actions";
 
 export function ReceiptUploader() {
+  const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+    const selected = e.target.files?.[0];
     setError(null);
-    if (!file) {
+    if (!selected) {
+      setFile(null);
       setPreview(null);
       return;
     }
-    setPreview(URL.createObjectURL(file));
+    setFile(selected);
+    setPreview(URL.createObjectURL(selected));
+  }
+
+  function reset() {
+    setFile(null);
+    setPreview(null);
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+    if (galleryInputRef.current) galleryInputRef.current.value = "";
   }
 
   function handleSubmit() {
-    const file = fileInputRef.current?.files?.[0];
     if (!file) return;
     const formData = new FormData();
     formData.set("photo", file);
@@ -44,10 +54,17 @@ export function ReceiptUploader() {
   return (
     <div className="flex flex-col gap-4">
       <input
-        ref={fileInputRef}
+        ref={cameraInputRef}
         type="file"
         accept="image/*"
         capture="environment"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
         className="hidden"
         onChange={handleFileChange}
       />
@@ -64,7 +81,7 @@ export function ReceiptUploader() {
       ) : (
         <button
           type="button"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => cameraInputRef.current?.click()}
           className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-border bg-surface py-14 text-center transition-colors hover:border-brand-400 hover:bg-brand-50/40"
         >
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand-600">
@@ -97,21 +114,14 @@ export function ReceiptUploader() {
               "Bon verwerken"
             )}
           </Button>
-          <Button
-            variant="ghost"
-            disabled={isPending}
-            onClick={() => {
-              setPreview(null);
-              if (fileInputRef.current) fileInputRef.current.value = "";
-            }}
-          >
+          <Button variant="ghost" disabled={isPending} onClick={reset}>
             Andere foto kiezen
           </Button>
         </div>
       ) : (
         <Button
           variant="secondary"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => galleryInputRef.current?.click()}
           className="justify-center"
         >
           <ImageUp size={18} />
