@@ -1,7 +1,12 @@
 import { and, eq, sql } from "drizzle-orm";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { bills, restaurants } from "@/db/schema";
 import { createBillId } from "@/lib/ids";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+const ACTIVE_RESTAURANT_COOKIE = "afgetikt_active_restaurant";
 
 function slugify(name: string): string {
   return (
@@ -25,6 +30,18 @@ async function uniqueSlug(name: string): Promise<string> {
   return candidate;
 }
 
+async function insertRestaurant(ownerUserId: string, trimmedName: string) {
+  const slug = await uniqueSlug(trimmedName);
+  const id = createBillId();
+  const [restaurant] = await db
+    .insert(restaurants)
+    .values({ id, ownerUserId, name: trimmedName, slug })
+    .returning();
+  return restaurant;
+}
+
+// Alleen voor de registratieflow: idempotent, zodat een dubbele
+// formulier-submit tijdens signup geen duplicaat restaurant aanmaakt.
 export async function createRestaurant(ownerUserId: string, name: string) {
   const trimmed = name.trim();
   if (!trimmed) throw new Error("Restaurantnaam is verplicht.");
@@ -34,19 +51,68 @@ export async function createRestaurant(ownerUserId: string, name: string) {
   });
   if (existing) return existing;
 
-  const slug = await uniqueSlug(trimmed);
-  const id = createBillId();
-  const [restaurant] = await db
-    .insert(restaurants)
-    .values({ id, ownerUserId, name: trimmed, slug })
-    .returning();
-  return restaurant;
+  return insertRestaurant(ownerUserId, trimmed);
 }
 
-export async function getRestaurantByOwner(ownerUserId: string) {
-  return db.query.restaurants.findFirst({
+// Alle restaurants van dit account, oudste (= eerst aangemaakt) eerst.
+export async function getRestaurantsByOwner(ownerUserId: string) {
+  return db.query.restaurants.findMany({
     where: eq(restaurants.ownerUserId, ownerUserId),
+    orderBy: (t, { asc }) => asc(t.createdAt),
   });
+}
+
+// Voegt een extra restaurant toe aan een bestaand account. In tegenstelling
+// tot createRestaurant() is dit nooit idempotent: elke aanroep maakt een
+// nieuw restaurant aan (één account kan er meerdere beheren).
+export async function addRestaurant(ownerUserId: string, name: string) {
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error("Restaurantnaam is verplicht.");
+  return insertRestaurant(ownerUserId, trimmed);
+}
+
+// Het restaurant dat nu actief staat voor dit account: het restaurant uit de
+// keuze-cookie als dat nog bij dit account hoort, anders het oudste
+// restaurant. Retourneert null als het account nog geen restaurant heeft.
+export async function getCurrentRestaurant(ownerUserId: string) {
+  const list = await getRestaurantsByOwner(ownerUserId);
+  if (list.length === 0) return null;
+
+  const cookieStore = await cookies();
+  const activeId = cookieStore.get(ACTIVE_RESTAURANT_COOKIE)?.value;
+  return list.find((r) => r.id === activeId) ?? list[0];
+}
+
+// Alleen aan te roepen vanuit een Server Action of Route Handler.
+export async function setActiveRestaurant(restaurantId: string) {
+  const cookieStore = await cookies();
+  cookieStore.set(ACTIVE_RESTAURANT_COOKIE, restaurantId, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 60 * 60 * 24 * 365,
+    path: "/",
+  });
+}
+
+// Gedeelde guard voor elke restaurant-dashboardpagina: haalt de ingelogde
+// gebruiker en zijn actieve restaurant op, of stuurt door als een van beide
+// ontbreekt.
+export async function requireCurrentRestaurant() {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/restaurant/inloggen");
+
+  const list = await getRestaurantsByOwner(user.id);
+  if (list.length === 0) redirect("/restaurant/registreren");
+
+  const cookieStore = await cookies();
+  const activeId = cookieStore.get(ACTIVE_RESTAURANT_COOKIE)?.value;
+  const restaurant = list.find((r) => r.id === activeId) ?? list[0];
+
+  return { user, restaurant, restaurants: list };
 }
 
 export async function getRestaurantBySlug(slug: string) {

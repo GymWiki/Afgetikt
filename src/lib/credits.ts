@@ -29,6 +29,10 @@ export async function getOrCreateDeviceId(): Promise<string> {
   return id;
 }
 
+// Weergavewaarde voor een apparaat met de eenmalige "pro"-aankoop: geen
+// getal, dus Infinity zodat elke "<= 0"-check hier nooit op slaat.
+export const UNLIMITED_CREDITS = Infinity;
+
 /**
  * Alleen voor weergave (bv. "nog 2 gratis bonnen") vanuit een Server
  * Component. Zet geen cookie en maakt geen database-rij aan.
@@ -41,12 +45,14 @@ export async function peekRemainingCredits(): Promise<number> {
   const row = await db.query.payerCredits.findFirst({
     where: eq(payerCredits.deviceId, deviceId),
   });
+  if (row?.unlimited) return UNLIMITED_CREDITS;
   return row?.credits ?? FREE_CREDITS;
 }
 
 /**
- * Trekt atomisch 1 credit af als er nog tegoed is. Retourneert het
- * resterende aantal credits, ongeacht of het gelukt is.
+ * Trekt atomisch 1 credit af als er nog tegoed is (of doet niets bij
+ * onbeperkt scannen). Retourneert het resterende aantal credits, ongeacht
+ * of het gelukt is.
  */
 export async function consumeCredit(
   deviceId: string,
@@ -55,6 +61,13 @@ export async function consumeCredit(
     .insert(payerCredits)
     .values({ deviceId })
     .onConflictDoNothing({ target: payerCredits.deviceId });
+
+  const existing = await db.query.payerCredits.findFirst({
+    where: eq(payerCredits.deviceId, deviceId),
+  });
+  if (existing?.unlimited) {
+    return { ok: true, remaining: UNLIMITED_CREDITS };
+  }
 
   const decremented = await db
     .update(payerCredits)

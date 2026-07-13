@@ -1,20 +1,14 @@
 import { ButtonLink } from "@/components/ui/button";
+import { isAccessBlocked } from "@/lib/billing";
 import { generateQrSvg, restaurantUrl } from "@/lib/qr";
-import { getRestaurantByOwner } from "@/lib/restaurants";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { requireCurrentRestaurant } from "@/lib/restaurants";
 import { ArrowLeft } from "lucide-react";
 import { redirect } from "next/navigation";
 import { PrintButton } from "./print-button";
 
 export default async function StickerPage() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/restaurant/inloggen");
-
-  const restaurant = await getRestaurantByOwner(user.id);
-  if (!restaurant) redirect("/restaurant/registreren");
+  const { restaurant } = await requireCurrentRestaurant();
+  if (isAccessBlocked(restaurant)) redirect("/restaurant/qr");
 
   const svg = await generateQrSvg(restaurantUrl(restaurant.slug));
 

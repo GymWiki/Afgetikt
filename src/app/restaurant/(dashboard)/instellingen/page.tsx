@@ -1,17 +1,8 @@
-import { getRestaurantByOwner } from "@/lib/restaurants";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { requireCurrentRestaurant } from "@/lib/restaurants";
 import { SettingsForm } from "./settings-form";
 
 export default async function InstellingenPage() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/restaurant/inloggen");
-
-  const restaurant = await getRestaurantByOwner(user.id);
-  if (!restaurant) redirect("/restaurant/registreren");
+  const { user, restaurant } = await requireCurrentRestaurant();
 
   return (
     <div className="flex flex-col gap-8">

@@ -1,28 +1,23 @@
 import { formatCents } from "@/lib/money";
-import {
-  getRecentBills,
-  getRestaurantByOwner,
-  getRestaurantStats,
-} from "@/lib/restaurants";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { BadgeCheck, QrCode } from "lucide-react";
+import { isAccessBlocked, trialDaysLeft } from "@/lib/billing";
+import { getRecentBills, getRestaurantStats, requireCurrentRestaurant } from "@/lib/restaurants";
+import { BadgeCheck, Hourglass, QrCode } from "lucide-react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { Paywall } from "./paywall";
 
 export default async function DashboardHomePage() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/restaurant/inloggen");
+  const { restaurant } = await requireCurrentRestaurant();
 
-  const restaurant = await getRestaurantByOwner(user.id);
-  if (!restaurant) redirect("/restaurant/registreren");
+  if (isAccessBlocked(restaurant)) {
+    return <Paywall restaurantName={restaurant.name} />;
+  }
 
   const [stats, recentBills] = await Promise.all([
     getRestaurantStats(restaurant.id),
     getRecentBills(restaurant.id),
   ]);
+
+  const daysLeft = trialDaysLeft(restaurant);
 
   return (
     <div className="flex flex-col gap-8">
@@ -40,20 +35,42 @@ export default async function DashboardHomePage() {
         <StatCard label="Betalingen" value={String(stats.paidCount)} />
       </div>
 
-      <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600">
-          <BadgeCheck size={18} strokeWidth={2} />
-        </div>
-        <div>
-          <div className="text-[15px] font-medium text-foreground">
-            Gratis tijdens bèta
+      {restaurant.subscriptionStatus === "trialing" ? (
+        <Link
+          href="/restaurant/abonnement"
+          className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-4 hover:border-brand-400/40"
+        >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+            <Hourglass size={18} strokeWidth={2} />
           </div>
-          <p className="text-sm text-muted">
-            Betaalde abonnementen volgen binnenkort — je gebruikt Afgetikt tot
-            die tijd kosteloos.
-          </p>
+          <div>
+            <div className="text-[15px] font-medium text-foreground">
+              Nog {daysLeft} {daysLeft === 1 ? "dag" : "dagen"} proefperiode
+            </div>
+            <p className="text-sm text-muted">
+              Kies een abonnement om zonder onderbreking door te gaan.
+            </p>
+          </div>
+        </Link>
+      ) : (
+        <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-4">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+            <BadgeCheck size={18} strokeWidth={2} />
+          </div>
+          <div>
+            <div className="text-[15px] font-medium text-foreground">
+              Abonnement actief
+            </div>
+            <p className="text-sm text-muted">
+              {restaurant.subscriptionPlan === "yearly"
+                ? "Jaarlijks abonnement"
+                : "Maandelijks abonnement"}
+              {restaurant.currentPeriodEnd &&
+                ` — verlengt op ${restaurant.currentPeriodEnd.toLocaleDateString("nl-NL")}`}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       {stats.totalBills === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-surface p-10 text-center">

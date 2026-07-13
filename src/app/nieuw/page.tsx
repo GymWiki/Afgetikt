@@ -1,6 +1,6 @@
 import { PageShell } from "@/components/ui/page-shell";
 import { ButtonLink } from "@/components/ui/button";
-import { peekRemainingCredits } from "@/lib/credits";
+import { peekRemainingCredits, UNLIMITED_CREDITS } from "@/lib/credits";
 import { ArrowLeft, TicketX } from "lucide-react";
 import Link from "next/link";
 import { ReceiptUploader } from "./receipt-uploader";
@@ -17,7 +17,9 @@ export default async function NieuwePage({
 }) {
   const { restaurantId } = await searchParams;
   const remainingCredits = restaurantId ? null : await peekRemainingCredits();
-  const outOfCredits = remainingCredits !== null && remainingCredits <= 0;
+  const unlimited = remainingCredits === UNLIMITED_CREDITS;
+  const outOfCredits =
+    remainingCredits !== null && !unlimited && remainingCredits <= 0;
 
   return (
     <PageShell className="gap-6">
@@ -49,11 +51,14 @@ export default async function NieuwePage({
             </div>
             <p className="mt-1 text-sm text-muted">
               Je hebt je 3 gratis bonnen gebruikt. Scan de QR-code van een
-              Afgetikt-restaurant voor een gratis bon — een betaalde versie
-              voor eigen bonnen komt binnenkort.
+              Afgetikt-restaurant voor een gratis bon, of koop een pakket om
+              direct verder te gaan.
             </p>
           </div>
-          <ButtonLink href="/" variant="secondary" className="mt-2">
+          <ButtonLink href="/nieuw/credits" className="mt-2 w-full">
+            Bonnen bijkopen
+          </ButtonLink>
+          <ButtonLink href="/" variant="secondary" className="w-full">
             Naar de homepage
           </ButtonLink>
         </div>
@@ -75,9 +80,21 @@ export default async function NieuwePage({
 
           {remainingCredits !== null && (
             <p className="text-center text-xs text-muted">
-              Nog {remainingCredits}{" "}
-              {remainingCredits === 1 ? "gratis bon" : "gratis bonnen"} over.
-              Via de QR-code van een restaurant is het altijd gratis.
+              {unlimited ? (
+                "Onbeperkt scannen actief op dit apparaat."
+              ) : (
+                <>
+                  Nog {remainingCredits}{" "}
+                  {remainingCredits === 1 ? "gratis bon" : "gratis bonnen"} over.
+                  Via de QR-code van een restaurant is het altijd gratis.{" "}
+                  <Link
+                    href="/nieuw/credits"
+                    className="font-medium text-foreground underline underline-offset-4"
+                  >
+                    Bonnen bijkopen
+                  </Link>
+                </>
+              )}
             </p>
           )}
         </>
