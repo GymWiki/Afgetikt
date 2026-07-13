@@ -4,7 +4,9 @@ import { z } from "zod";
 const ParsedItemSchema = z.object({
   name: z.string().min(1).max(120),
   quantity: z.number().int().min(1).max(50),
-  priceCents: z.number().int().min(0),
+  // Kan negatief zijn: kortingsregels (bv. loyaliteitskorting, actiebon)
+  // staan vaak als eigen regel met een negatief bedrag op de bon.
+  priceCents: z.number().int().min(-1_000_000).max(1_000_000),
 });
 
 const ParsedReceiptSchema = z.object({
@@ -18,7 +20,7 @@ export type ParsedReceipt = z.infer<typeof ParsedReceiptSchema>;
 const SYSTEM_PROMPT = `Je leest een foto van een Nederlandse of Europese restaurantrekening en zet die om naar strikt JSON.
 
 Regels:
-- "priceCents" is de TOTALE prijs voor die regel (dus prijs x aantal), in centen, als geheel getal.
+- "priceCents" is de TOTALE prijs voor die regel (dus prijs x aantal), in centen, als geheel getal. Is de regel een korting, loyaliteitsvoordeel of actiebon (bv. "uw glimlach", "korting"), gebruik dan een NEGATIEF getal.
 - "quantity" is het aantal van dat product op de regel (minimaal 1).
 - Splits geen enkel product op in meerdere regels; combineer identieke regels niet samengevoegd tenzij ze al zo op de bon staan.
 - "serviceCents" is eventuele service-/bedieningskosten of fooi die apart op de bon staat (in centen). Staat er niets apart, gebruik dan 0. BTW die al in de prijzen is verwerkt telt niet mee als aparte service.
@@ -80,6 +82,11 @@ export async function parseReceiptImage(params: {
 
   const parsed = ParsedReceiptSchema.safeParse(raw);
   if (!parsed.success) {
+    console.error(
+      "receipt-parser: onverwacht formaat",
+      parsed.error.flatten(),
+      jsonText,
+    );
     throw new ReceiptParseError("De herkende bon had een onverwacht formaat.");
   }
   if (parsed.data.items.length === 0) {
