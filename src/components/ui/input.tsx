@@ -8,10 +8,11 @@ export function Input({
   return (
     <input
       className={cn(
-        "h-12 w-full rounded-xl border border-border bg-surface px-4 text-[16px] text-foreground",
-        "placeholder:text-muted outline-none transition-shadow",
+        "h-12 w-full rounded-xl border border-border bg-surface px-4 text-[16px] text-foreground shadow-[0_1px_2px_rgba(18,36,32,0.04)]",
+        "placeholder:text-muted outline-none transition-all duration-150",
+        "hover:border-brand-400/40",
         "focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15",
-        "disabled:opacity-50",
+        "disabled:opacity-50 disabled:hover:border-border",
         className,
       )}
       {...props}
@@ -25,7 +26,7 @@ export function Label({
 }: LabelHTMLAttributes<HTMLLabelElement>) {
   return (
     <label
-      className={cn("mb-2 block text-sm font-medium text-foreground", className)}
+      className={cn("mb-2 block text-sm font-semibold text-foreground", className)}
       {...props}
     />
   );

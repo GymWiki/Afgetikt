@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { Logo } from "@/components/ui/logo";
 import { LayoutGrid, QrCode, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -18,14 +19,13 @@ export function DashboardNav({ restaurantName }: { restaurantName: string }) {
   return (
     <header className="border-b border-border bg-surface print:hidden">
       <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-4">
-        <div>
-          <div className="text-xs font-semibold tracking-wide text-brand-600">
-            Afgetikt voor restaurants
-          </div>
-          <div className="text-[15px] font-medium text-foreground">
+        <Link href="/" className="flex items-center gap-3">
+          <Logo size="sm" />
+          <span className="hidden h-6 w-px bg-border sm:block" />
+          <span className="hidden text-[15px] font-medium text-foreground sm:block">
             {restaurantName}
-          </div>
-        </div>
+          </span>
+        </Link>
         <form action={logoutAction}>
           <button
             type="submit"
@@ -34,6 +34,9 @@ export function DashboardNav({ restaurantName }: { restaurantName: string }) {
             Uitloggen
           </button>
         </form>
+      </div>
+      <div className="mx-auto max-w-3xl px-5 pb-2 text-sm font-medium text-foreground sm:hidden">
+        {restaurantName}
       </div>
       <nav className="mx-auto flex max-w-3xl gap-1 px-5">
         {links.map((link) => {

@@ -1,20 +1,32 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fafaf8;
-  --foreground: #14181a;
+  --background: #f5f8f7;
+  --foreground: #122420;
   --surface: #ffffff;
-  --border: #e7e5e1;
-  --muted: #6b7069;
+  --border: #e2e8e5;
+  --muted: #5c6d68;
 
-  --brand-50: #eefaf3;
-  --brand-100: #d6f3e2;
-  --brand-400: #2fa872;
-  /* WCAG AA vereist 4.5:1 voor tekst; wit-op-brand-500 (voorheen #178a5c)
-     haalde maar 4.35:1. Deze tint haalt 4.82:1. */
-  --brand-500: #158256;
-  --brand-600: #0f6f49;
-  --brand-700: #0b573a;
+  /* Merkkleuren, bemonsterd uit het Afgetikt-logo. */
+  --brand-50: #eaf3ee;
+  --brand-100: #cfe4d8;
+  --brand-400: #4a7d70;
+  --brand-500: #285048;
+  --brand-600: #1f4038;
+  --brand-700: #16302a;
+
+  --sage-50: #eef8f2;
+  --sage-100: #d6eee0;
+  --sage-500: #90c8a8;
+
+  /* Oranje is puur decoratief (logo-stip, badges): #ff751f haalt maar
+     2.7:1 contrast op wit en mag dus nooit als tekst- of knopkleur op een
+     lichte ondergrond dienen. --accent-ink is een verdonkerde variant die
+     wel 5.4:1 haalt, voor de zeldzame gevallen waar oranje tekst/pictogram
+     nodig is. */
+  --accent: #ff751f;
+  --accent-50: #fff1e8;
+  --accent-ink: #b34a0a;
 }
 
 @theme inline {
@@ -31,7 +43,15 @@
   --color-brand-600: var(--brand-600);
   --color-brand-700: var(--brand-700);
 
-  --font-sans: var(--font-geist-sans);
+  --color-sage-50: var(--sage-50);
+  --color-sage-100: var(--sage-100);
+  --color-sage-500: var(--sage-500);
+
+  --color-accent: var(--accent);
+  --color-accent-50: var(--accent-50);
+  --color-accent-ink: var(--accent-ink);
+
+  --font-sans: var(--font-plex-sans);
   --font-mono: var(--font-geist-mono);
 }
 

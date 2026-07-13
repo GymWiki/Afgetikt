@@ -1,4 +1,5 @@
 import { Button, ButtonLink } from "@/components/ui/button";
+import { Logo } from "@/components/ui/logo";
 import {
   BarChart3,
   Camera,
@@ -9,6 +10,7 @@ import {
   Sticker,
   Users,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 const steps = [
@@ -59,106 +61,182 @@ const trustPoints = [
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col">
-      <header className="mx-auto flex w-full max-w-3xl items-center justify-between px-5 py-6">
-        <span className="text-sm font-semibold tracking-wide text-brand-600">
-          Afgetikt
-        </span>
+      <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-5 py-6">
+        <Link href="/">
+          <Logo size="md" />
+        </Link>
         <Link
           href="#restaurants"
-          className="text-sm text-muted hover:text-foreground"
+          className="text-sm font-medium text-muted hover:text-foreground"
         >
           Voor restaurants
         </Link>
       </header>
 
-      <section className="mx-auto w-full max-w-3xl px-5 pb-16 pt-4">
-        <div className="flex flex-col gap-12 sm:max-w-md">
+      <section className="mx-auto w-full max-w-5xl px-5 pb-20 pt-6 sm:pt-10">
+        <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-8">
           <div>
-            <h1 className="text-[2rem] font-semibold leading-[1.15] tracking-tight text-foreground">
+            <div className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-brand-100 bg-brand-50 px-3 py-1 text-xs font-semibold tracking-wide text-brand-600">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+              Scan · Tik · Klaar
+            </div>
+            <h1 className="text-[2.25rem] font-bold leading-[1.1] tracking-tight text-foreground sm:text-5xl">
               De rekening splitsen, zonder rekenwerk.
             </h1>
-            <p className="mt-3 text-[17px] leading-relaxed text-muted">
+            <p className="mt-4 max-w-md text-[17px] leading-relaxed text-muted">
               Jij betaalt. Afgetikt regelt de rest binnen een minuut — geen
               Tikkies achteraf, geen discussie over wie wat had.
             </p>
 
-            <ButtonLink href="/nieuw" size="lg" className="mt-8 w-full">
-              Nieuwe rekening starten
-            </ButtonLink>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <ButtonLink href="/nieuw" size="lg" className="sm:w-auto">
+                Nieuwe rekening starten
+              </ButtonLink>
+            </div>
+
+            <div className="mt-10 flex items-center gap-6 border-t border-border pt-6">
+              <div className="flex items-center gap-2 text-sm text-muted">
+                <ShieldCheck size={16} className="text-brand-500" />
+                Geen betalingen via Afgetikt
+              </div>
+            </div>
           </div>
 
-          <div>
-            <div className="mb-5 text-xs font-medium uppercase tracking-wide text-muted">
-              Hoe het werkt
+          <div className="relative mx-auto w-full max-w-sm lg:max-w-none">
+            <div className="absolute -inset-4 -z-10 rounded-[2.5rem] bg-gradient-to-br from-brand-50 via-sage-50 to-transparent blur-2xl" />
+            <div className="rounded-[2rem] border border-border bg-surface p-6 shadow-[0_1px_2px_rgba(18,36,32,0.06),0_24px_48px_-24px_rgba(40,80,72,0.35)] sm:p-8">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-foreground">
+                  Terras De Linde
+                </span>
+                <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-600">
+                  Open
+                </span>
+              </div>
+              <ul className="mt-5 flex flex-col gap-3">
+                {[
+                  { name: "2× Tosti gezond", price: "€9,00", done: true },
+                  { name: "3× Radler 0.0", price: "€10,50", done: true },
+                  { name: "1× Bitterballen", price: "€8,50", done: false },
+                ].map((item) => (
+                  <li
+                    key={item.name}
+                    className="flex items-center justify-between rounded-xl border border-border bg-background px-4 py-3"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <CircleCheckBig
+                        size={16}
+                        strokeWidth={2.5}
+                        className={
+                          item.done ? "text-brand-500" : "text-border"
+                        }
+                      />
+                      <span className="text-sm font-medium text-foreground">
+                        {item.name}
+                      </span>
+                    </div>
+                    <span className="text-sm font-semibold tabular-nums text-foreground">
+                      {item.price}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
+                <span className="text-sm text-muted">Jouw deel</span>
+                <span className="text-lg font-bold tabular-nums text-brand-600">
+                  €14,17
+                </span>
+              </div>
             </div>
-            <ol className="flex flex-col gap-5">
-              {steps.map((step, i) => (
-                <li key={step.title} className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600">
-                    <step.icon size={18} strokeWidth={2} />
-                  </div>
-                  <div>
-                    <div className="text-[15px] font-medium text-foreground">
-                      {i + 1}. {step.title}
-                    </div>
-                    <div className="text-sm text-muted">
-                      {step.description}
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ol>
           </div>
+        </div>
+
+        <div className="mt-20">
+          <div className="mb-6 text-xs font-semibold uppercase tracking-wide text-muted">
+            Hoe het werkt
+          </div>
+          <ol className="grid gap-5 sm:grid-cols-3">
+            {steps.map((step, i) => (
+              <li
+                key={step.title}
+                className="rounded-2xl border border-border bg-surface p-5"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+                  <step.icon size={18} strokeWidth={2} />
+                </div>
+                <div className="mt-3 text-[15px] font-semibold text-foreground">
+                  {i + 1}. {step.title}
+                </div>
+                <div className="mt-1 text-sm leading-relaxed text-muted">
+                  {step.description}
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
       <section id="restaurants" className="border-t border-border bg-surface">
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-5 py-16">
-          <div className="max-w-lg">
-            <div className="mb-2 text-xs font-medium uppercase tracking-wide text-brand-600">
-              Voor restaurants
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-5 py-16 lg:py-20">
+          <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
+            <div>
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-brand-600">
+                Voor restaurants
+              </div>
+              <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                Laat gasten hun rekening zelf regelen
+              </h2>
+              <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-muted">
+                Hang je eigen QR-code op tafel of bij de kassa. Gasten
+                scannen, splitsen de rekening zelf en jij houdt overzicht —
+                zonder dat je personeel hoeft te rekenen of Tikkies hoeft na
+                te sturen.
+              </p>
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <ButtonLink href="/restaurant/registreren" className="sm:w-auto">
+                  Restaurant aanmelden
+                </ButtonLink>
+                <Link href="/restaurant/inloggen">
+                  <Button variant="secondary" className="w-full sm:w-auto">
+                    Al een account? Inloggen
+                  </Button>
+                </Link>
+              </div>
             </div>
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-              Laat gasten hun rekening zelf regelen
-            </h2>
-            <p className="mt-3 text-[15px] leading-relaxed text-muted">
-              Hang je eigen QR-code op tafel of bij de kassa. Gasten scannen,
-              splitsen de rekening zelf en jij houdt overzicht — zonder dat
-              je personeel hoeft te rekenen of Tikkies hoeft na te sturen.
-            </p>
+            <div className="flex justify-center">
+              <Image
+                src="/logo-icon.png"
+                alt="Afgetikt"
+                width={200}
+                height={200}
+                className="opacity-90"
+              />
+            </div>
           </div>
 
           <div className="grid gap-6 sm:grid-cols-3">
             {restaurantFeatures.map((feature) => (
-              <div key={feature.title}>
+              <div
+                key={feature.title}
+                className="rounded-2xl border border-border bg-background p-5"
+              >
                 <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-600">
                   <feature.icon size={18} strokeWidth={2} />
                 </div>
-                <div className="text-[15px] font-medium text-foreground">
+                <div className="text-[15px] font-semibold text-foreground">
                   {feature.title}
                 </div>
-                <p className="mt-1 text-sm text-muted">
+                <p className="mt-1 text-sm leading-relaxed text-muted">
                   {feature.description}
                 </p>
               </div>
             ))}
           </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <ButtonLink href="/restaurant/registreren" className="sm:w-auto">
-              Restaurant aanmelden
-            </ButtonLink>
-            <Link href="/restaurant/inloggen">
-              <Button variant="secondary" className="w-full sm:w-auto">
-                Al een account? Inloggen
-              </Button>
-            </Link>
-          </div>
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-3xl px-5 py-16">
-        <ul className="flex flex-col gap-4 sm:max-w-md">
+      <section className="mx-auto w-full max-w-5xl px-5 py-16">
+        <ul className="grid gap-4 sm:max-w-md">
           {trustPoints.map((point) => (
             <li key={point} className="flex items-start gap-3">
               <CircleCheckBig
@@ -173,21 +251,27 @@ export default function Home() {
       </section>
 
       <footer className="mt-auto border-t border-border">
-        <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-3 px-5 py-8 text-center sm:flex-row sm:justify-between sm:text-left">
-          <div className="flex items-center gap-1.5 text-xs text-muted">
-            <ShieldCheck size={14} />
-            Afgetikt verwerkt geen betalingen
-          </div>
-          <div className="flex gap-4 text-xs text-muted">
-            <Link href="/restaurant/inloggen" className="hover:text-foreground">
-              Restaurant inloggen
-            </Link>
-            <Link
-              href="/restaurant/registreren"
-              className="hover:text-foreground"
-            >
-              Restaurant aanmelden
-            </Link>
+        <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 px-5 py-8 text-center sm:flex-row sm:justify-between sm:text-left">
+          <Logo size="sm" />
+          <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-4">
+            <div className="flex items-center gap-1.5 text-xs text-muted">
+              <ShieldCheck size={14} />
+              Afgetikt verwerkt geen betalingen
+            </div>
+            <div className="flex gap-4 text-xs text-muted">
+              <Link
+                href="/restaurant/inloggen"
+                className="hover:text-foreground"
+              >
+                Restaurant inloggen
+              </Link>
+              <Link
+                href="/restaurant/registreren"
+                className="hover:text-foreground"
+              >
+                Restaurant aanmelden
+              </Link>
+            </div>
           </div>
         </div>
       </footer>
