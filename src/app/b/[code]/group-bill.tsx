@@ -186,7 +186,10 @@ export function GroupBill({
   }
 
   return (
-    <div className="flex flex-col gap-5 pb-28">
+    <div
+      className="flex flex-col gap-5"
+      style={{ paddingBottom: "calc(7rem + env(safe-area-inset-bottom))" }}
+    >
       <div className="flex items-center justify-between">
         <div>
           <div className="text-sm text-muted">{title ?? "Rekening"}</div>
@@ -267,7 +270,10 @@ export function GroupBill({
         splitTotals={split.perParticipant}
       />
 
-      <div className="fixed inset-x-0 bottom-0 border-t border-border bg-surface/95 backdrop-blur">
+      <div
+        className="fixed inset-x-0 bottom-0 border-t border-border bg-surface/95 backdrop-blur"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
         <div className="mx-auto flex max-w-md items-center gap-3 px-5 py-4">
           <div className="flex-1">
             <div className="text-xs text-muted">

@@ -1,4 +1,3 @@
-import { ButtonLink } from "@/components/ui/button";
 import { PageShell } from "@/components/ui/page-shell";
 import { getDraftBillForEdit } from "@/lib/bills";
 import { notFound } from "next/navigation";
@@ -33,20 +32,13 @@ export default async function ControlerenPage({
 
       <ItemEditor
         initialItems={draft.items}
+        continueHref={`/nieuw/${code}/betaallink?key=${key}`}
         actions={{
           addItem: addItemAction.bind(null, code, key),
           updateItem: updateItemAction.bind(null, code, key),
           deleteItem: deleteItemAction.bind(null, code, key),
         }}
       />
-
-      <ButtonLink
-        href={`/nieuw/${code}/betaallink?key=${key}`}
-        size="lg"
-        className="mt-2"
-      >
-        Doorgaan
-      </ButtonLink>
     </PageShell>
   );
 }

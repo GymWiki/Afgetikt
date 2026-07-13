@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -12,10 +12,31 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+
 export const metadata: Metadata = {
-  title: "Afgetikt — de rekening splitsen zonder gedoe",
+  metadataBase: new URL(baseUrl),
+  title: {
+    default: "Afgetikt — de rekening splitsen zonder gedoe",
+    template: "%s — Afgetikt",
+  },
   description:
     "Fotografeer de bon, deel de link, iedereen kiest zijn eigen producten. Afgetikt rekent de rest automatisch uit.",
+  manifest: "/manifest.webmanifest",
+  openGraph: {
+    title: "Afgetikt — de rekening splitsen zonder gedoe",
+    description:
+      "Fotografeer de bon, deel de link, iedereen kiest zijn eigen producten.",
+    locale: "nl_NL",
+    type: "website",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#fafaf8",
 };
 
 export default function RootLayout({

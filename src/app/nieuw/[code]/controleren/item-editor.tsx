@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCents, parseAmountToCents } from "@/lib/money";
 import { Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
@@ -23,9 +23,11 @@ type Actions = {
 export function ItemEditor({
   initialItems,
   actions,
+  continueHref,
 }: {
   initialItems: EditableItem[];
   actions: Actions;
+  continueHref: string;
 }) {
   const [items, setItems] = useState(initialItems);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -188,6 +190,16 @@ export function ItemEditor({
           <Loader2 size={14} className="animate-spin" />
           Opslaan…
         </div>
+      )}
+
+      {items.length === 0 ? (
+        <p className="text-center text-sm text-muted">
+          Voeg minimaal één product toe om door te gaan.
+        </p>
+      ) : (
+        <ButtonLink href={continueHref} size="lg">
+          Doorgaan
+        </ButtonLink>
       )}
     </div>
   );
