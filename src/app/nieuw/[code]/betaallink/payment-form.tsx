@@ -41,18 +41,19 @@ export function PaymentForm({
       </div>
 
       <div>
-        <Label htmlFor="paymentLink">Jouw betaalverzoek-link</Label>
+        <Label htmlFor="paymentLink">Jouw betaalverzoek</Label>
         <Input
           id="paymentLink"
           name="paymentLink"
-          placeholder="https://tikkie.me/pay/..."
-          inputMode="url"
+          placeholder="Plak hier de link, of het hele berichtje van je bank"
           autoComplete="off"
           required
         />
         <p className="mt-1.5 text-xs text-muted">
-          Maak een betaalverzoek voor het totaalbedrag in je bank-app
-          (Tikkie, ING, Rabobank, ABN AMRO, …) en plak de link hier.
+          Maak in je bank-app (Tikkie, ING, Rabobank, ABN AMRO, …) een
+          betaalverzoek met een <strong>open bedrag</strong> — iedereen
+          betaalt namelijk een ander bedrag. Plak daarna de link, of gewoon
+          het hele gedeelde berichtje: Afgetikt haalt de link er zelf uit.
         </p>
       </div>
 

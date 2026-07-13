@@ -1,5 +1,6 @@
 import { PageShell } from "@/components/ui/page-shell";
 import { getBillForManager } from "@/lib/bills";
+import type { SplitItemClaim } from "@/lib/split";
 import { notFound } from "next/navigation";
 import { ManagerDashboard } from "./manager-dashboard";
 
@@ -17,10 +18,13 @@ export default async function BeheerPage({
   const data = await getBillForManager(code, key);
   if (!data) notFound();
 
-  const claimsByItem: Record<string, string[]> = {};
+  const claimsByItem: Record<string, SplitItemClaim[]> = {};
   for (const item of data.items) claimsByItem[item.id] = [];
   for (const claim of data.claims) {
-    claimsByItem[claim.itemId]?.push(claim.participantId);
+    claimsByItem[claim.itemId]?.push({
+      participantId: claim.participantId,
+      quantity: claim.quantity,
+    });
   }
 
   return (

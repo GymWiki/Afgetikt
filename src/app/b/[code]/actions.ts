@@ -1,6 +1,6 @@
 "use server";
 
-import { joinBill, setItemClaim, setSelfPaid } from "@/lib/bills";
+import { joinBill, setItemClaimQuantity, setSelfPaid } from "@/lib/bills";
 import { revalidatePath } from "next/cache";
 
 export async function joinBillAction(billId: string, name: string) {
@@ -12,22 +12,25 @@ export async function joinBillAction(billId: string, name: string) {
   return participant;
 }
 
-export async function toggleClaimAction(
+export async function setClaimQuantityAction(
   billId: string,
   participantId: string,
   participantToken: string,
   itemId: string,
-  claimed: boolean,
+  quantity: number,
 ) {
-  const success = await setItemClaim(
+  const result = await setItemClaimQuantity(
     billId,
     participantId,
     participantToken,
     itemId,
-    claimed,
+    quantity,
   );
-  if (success) revalidatePath(`/b/${billId}`);
-  return success;
+  if (result.ok) {
+    revalidatePath(`/b/${billId}`);
+    revalidatePath(`/b/${billId}/beheer`);
+  }
+  return result;
 }
 
 export async function markSelfPaidAction(

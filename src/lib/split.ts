@@ -1,7 +1,13 @@
+export type SplitItemClaim = {
+  participantId: string;
+  quantity: number;
+};
+
 export type SplitItem = {
   id: string;
   priceCents: number;
-  claimedByParticipantIds: string[];
+  quantity: number;
+  claims: SplitItemClaim[];
 };
 
 export type SplitParticipant = {
@@ -24,10 +30,14 @@ export type SplitResult = {
   grandTotalCents: number;
 };
 
+const UNCLAIMED = "__unclaimed__";
+
 /**
- * Verdeelt bonregels over deelnemers. Een item met meerdere claims (bv. een
- * gedeeld schaaltje bitterballen) wordt evenredig verdeeld. Servicekosten
- * worden naar rato van ieders aandeel in de geclaimde items verdeeld.
+ * Verdeelt bonregels over deelnemers. Een regel (bv. "6x Biertje") kan per
+ * eenheid geclaimd worden: twee mensen kunnen samen bv. 2 en 4 van de 6
+ * claimen. Het niet-geclaimde deel telt mee als `unclaimedCents`.
+ * Servicekosten worden naar rato van ieders aandeel in de geclaimde items
+ * verdeeld.
  *
  * Rondingsverschillen (centen) worden weggewerkt met de "largest remainder"
  * methode, zodat de som van alle bedragen altijd exact het totaal is.
@@ -40,20 +50,30 @@ export function calculateSplit(
   const subtotalByParticipant = new Map<string, number>(
     participants.map((p) => [p.id, 0]),
   );
+  const knownParticipants = new Set(participants.map((p) => p.id));
 
   let claimedSubtotalCents = 0;
   let unclaimedCents = 0;
 
   for (const item of items) {
-    const claimants = item.claimedByParticipantIds.filter((id) =>
-      subtotalByParticipant.has(id),
-    );
-    if (claimants.length === 0) {
-      unclaimedCents += item.priceCents;
-      continue;
+    const claims = item.claims.filter((c) => knownParticipants.has(c.participantId));
+    const claimedQuantity = claims.reduce((sum, c) => sum + c.quantity, 0);
+    const remainingQuantity = Math.max(0, item.quantity - claimedQuantity);
+
+    const weighted = [
+      ...claims.map((c) => ({ id: c.participantId, weight: c.quantity })),
+      ...(remainingQuantity > 0 ? [{ id: UNCLAIMED, weight: remainingQuantity }] : []),
+    ];
+
+    const shares = distributeProportionally(item.priceCents, weighted);
+    for (const [id, cents] of shares) {
+      if (id === UNCLAIMED) {
+        unclaimedCents += cents;
+      } else {
+        claimedSubtotalCents += cents;
+        subtotalByParticipant.set(id, (subtotalByParticipant.get(id) ?? 0) + cents);
+      }
     }
-    claimedSubtotalCents += item.priceCents;
-    distributeEvenly(item.priceCents, claimants, subtotalByParticipant);
   }
 
   const serviceByParticipant =
@@ -85,20 +105,6 @@ export function calculateSplit(
     claimedSubtotalCents,
     grandTotalCents: claimedSubtotalCents + serviceCents,
   };
-}
-
-function distributeEvenly(
-  amountCents: number,
-  participantIds: string[],
-  target: Map<string, number>,
-): void {
-  const shares = distributeProportionally(
-    amountCents,
-    participantIds.map((id) => ({ id, weight: 1 })),
-  );
-  for (const [id, share] of shares) {
-    target.set(id, (target.get(id) ?? 0) + share);
-  }
 }
 
 /**

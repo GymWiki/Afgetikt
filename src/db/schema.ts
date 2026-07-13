@@ -83,9 +83,23 @@ export const itemClaims = pgTable(
     participantId: text("participant_id")
       .notNull()
       .references(() => participants.id, { onDelete: "cascade" }),
+    // Hoeveel van item.quantity deze deelnemer claimt (bv. 2 van de 6
+    // biertjes). Eén claimrij per (item, deelnemer)-combinatie.
+    quantity: integer("quantity").notNull().default(1),
   },
   (table) => [unique().on(table.itemId, table.participantId)],
 );
+
+// Anonieme credit-tracking per apparaat (cookie), zodat een hoofdbetaler
+// zonder account toch een gratis-tegoed heeft. QR-scans via een
+// partnerrestaurant tellen hier niet tegen mee (altijd gratis voor de gast).
+export const payerCredits = pgTable("payer_credits", {
+  deviceId: text("device_id").primaryKey(),
+  credits: integer("credits").notNull().default(3),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
 
 export const billsRelations = relations(bills, ({ many, one }) => ({
   items: many(billItems),

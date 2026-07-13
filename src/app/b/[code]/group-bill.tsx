@@ -8,12 +8,13 @@ import {
   getParticipant,
   storeParticipantToken,
 } from "@/lib/client-session";
-import { formatCents } from "@/lib/money";
-import { calculateSplit } from "@/lib/split";
-import { Check, ExternalLink, Loader2 } from "lucide-react";
+import { formatCents, formatCentsForClipboard } from "@/lib/money";
+import { calculateSplit, type SplitItemClaim } from "@/lib/split";
+import { Check, ExternalLink, Loader2, Minus, Plus } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { joinBillAction, markSelfPaidAction, toggleClaimAction } from "./actions";
+import { joinBillAction, markSelfPaidAction, setClaimQuantityAction } from "./actions";
 
 export type GroupItem = {
   id: string;
@@ -28,6 +29,10 @@ export type GroupParticipant = {
   isPayer: boolean;
   hasPaid: boolean;
 };
+
+// Ververst de rekening periodiek zodat wijzigingen van anderen (nieuwe
+// keuzes, betalingen) ook zichtbaar worden zonder dat je zelf iets doet.
+const LIVE_REFRESH_MS = 6000;
 
 export function GroupBill({
   billId,
@@ -46,8 +51,9 @@ export function GroupBill({
   serviceCents: number;
   items: GroupItem[];
   initialParticipants: GroupParticipant[];
-  initialClaimsByItem: Record<string, string[]>;
+  initialClaimsByItem: Record<string, SplitItemClaim[]>;
 }) {
+  const router = useRouter();
   // Start altijd als "onbekend" op de server, en pas pas na hydratie de
   // localStorage-sessie in (anders ontstaat er een SSR/CSR mismatch).
   const [session, setSession] = useState<{
@@ -63,6 +69,7 @@ export function GroupBill({
   const [joinError, setJoinError] = useState<string | null>(null);
   const [participants, setParticipants] = useState(initialParticipants);
   const [claimsByItem, setClaimsByItem] = useState(initialClaimsByItem);
+  const [copiedAmount, setCopiedAmount] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -76,13 +83,29 @@ export function GroupBill({
     });
   }, [billId]);
 
+  // Live-ish: elke paar seconden verse data ophalen zodat je ziet wat
+  // anderen aan tafel kiezen of betalen, zonder zelf te hoeven verversen.
+  useEffect(() => {
+    const interval = setInterval(() => router.refresh(), LIVE_REFRESH_MS);
+    return () => clearInterval(interval);
+  }, [router]);
+
+  useEffect(() => {
+    // Nieuwe server-props na een live-refresh moeten de lokale kopie
+    // overschrijven, anders blijft gepolld data onzichtbaar.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setParticipants(initialParticipants);
+    setClaimsByItem(initialClaimsByItem);
+  }, [initialParticipants, initialClaimsByItem]);
+
   const meParticipant = participants.find((p) => p.id === me?.participantId);
 
   const split = useMemo(() => {
     const splitItems = items.map((item) => ({
       id: item.id,
       priceCents: item.priceCents,
-      claimedByParticipantIds: claimsByItem[item.id] ?? [],
+      quantity: item.quantity,
+      claims: claimsByItem[item.id] ?? [],
     }));
     return calculateSplit(splitItems, participants, serviceCents);
   }, [items, claimsByItem, participants, serviceCents]);
@@ -113,26 +136,27 @@ export function GroupBill({
     });
   }
 
-  function toggleClaim(itemId: string) {
+  function setMyClaimQuantity(itemId: string, quantity: number) {
     if (!me) return;
     const current = claimsByItem[itemId] ?? [];
-    const claimed = current.includes(me.participantId);
-    const next = claimed
-      ? current.filter((id) => id !== me.participantId)
-      : [...current, me.participantId];
+    const previousMine = current.find((c) => c.participantId === me.participantId);
+    const others = current.filter((c) => c.participantId !== me.participantId);
+    const next =
+      quantity > 0 ? [...others, { participantId: me.participantId, quantity }] : others;
     setClaimsByItem((prev) => ({ ...prev, [itemId]: next }));
 
     startTransition(async () => {
-      const success = await toggleClaimAction(
+      const result = await setClaimQuantityAction(
         billId,
         me.participantId,
         me.token,
         itemId,
-        !claimed,
+        quantity,
       );
-      if (!success) {
-        // rollback bij mislukking
-        setClaimsByItem((prev) => ({ ...prev, [itemId]: current }));
+      if (!result.ok) {
+        // rollback bij mislukking (bv. iemand anders was net sneller)
+        const rolledBack = previousMine ? [...others, previousMine] : others;
+        setClaimsByItem((prev) => ({ ...prev, [itemId]: rolledBack }));
       }
     });
   }
@@ -146,6 +170,19 @@ export function GroupBill({
     startTransition(async () => {
       await markSelfPaidAction(billId, me.participantId, me.token, next);
     });
+  }
+
+  async function handlePay() {
+    const amount = formatCentsForClipboard(myTotal?.totalCents ?? 0);
+    try {
+      await navigator.clipboard.writeText(amount);
+      setCopiedAmount(true);
+      setTimeout(() => setCopiedAmount(false), 3000);
+    } catch {
+      // clipboard kan geweigerd worden (bv. geen HTTPS of permissie); de
+      // gebruiker kan het bedrag dan nog altijd zelf overtypen.
+    }
+    window.open(paymentLink, "_blank", "noopener,noreferrer");
   }
 
   if (!checkedSession) {
@@ -217,52 +254,16 @@ export function GroupBill({
       </div>
 
       <div className="flex flex-col divide-y divide-border rounded-2xl border border-border bg-surface">
-        {items.map((item) => {
-          const claimants = claimsByItem[item.id] ?? [];
-          const iClaimed = claimants.includes(me.participantId);
-          const otherNames = claimants
-            .filter((id) => id !== me.participantId)
-            .map((id) => participants.find((p) => p.id === id)?.name)
-            .filter(Boolean);
-
-          return (
-            <button
-              key={item.id}
-              onClick={() => toggleClaim(item.id)}
-              className={`flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${
-                iClaimed ? "bg-brand-50/60" : "hover:bg-black/[0.02]"
-              }`}
-            >
-              <div
-                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
-                  iClaimed
-                    ? "border-brand-500 bg-brand-500 text-white"
-                    : "border-border"
-                }`}
-              >
-                {iClaimed && <Check size={14} strokeWidth={3} />}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[15px] font-medium text-foreground">
-                  {item.name}
-                  {item.quantity > 1 && (
-                    <span className="ml-1.5 text-sm text-muted">
-                      ×{item.quantity}
-                    </span>
-                  )}
-                </div>
-                {otherNames.length > 0 && (
-                  <div className="truncate text-xs text-muted">
-                    ook: {otherNames.join(", ")}
-                  </div>
-                )}
-              </div>
-              <div className="text-[15px] tabular-nums text-foreground">
-                {formatCents(item.priceCents)}
-              </div>
-            </button>
-          );
-        })}
+        {items.map((item) => (
+          <ItemRow
+            key={item.id}
+            item={item}
+            claims={claimsByItem[item.id] ?? []}
+            participants={participants}
+            myParticipantId={me.participantId}
+            onChangeMyQuantity={(quantity) => setMyClaimQuantity(item.id, quantity)}
+          />
+        ))}
       </div>
 
       {split.unclaimedCents > 0 && (
@@ -285,7 +286,11 @@ export function GroupBill({
         <div className="mx-auto flex max-w-md items-center gap-3 px-5 py-4">
           <div className="flex-1">
             <div className="text-xs text-muted">
-              {meParticipant?.isPayer ? "Jij legde uit" : "Jij betaalt"}
+              {copiedAmount
+                ? "Gekopieerd ✓"
+                : meParticipant?.isPayer
+                  ? "Jij legde uit"
+                  : "Jij betaalt"}
             </div>
             <div className="text-lg font-semibold tabular-nums text-foreground">
               {formatCents(
@@ -311,15 +316,115 @@ export function GroupBill({
               <Button variant="secondary" onClick={toggleSelfPaid}>
                 Ik heb betaald
               </Button>
-              <a href={paymentLink} target="_blank" rel="noopener noreferrer">
-                <Button>
-                  Betaal
-                  <ExternalLink size={16} />
-                </Button>
-              </a>
+              <Button onClick={handlePay}>
+                Betaal
+                <ExternalLink size={16} />
+              </Button>
             </>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ItemRow({
+  item,
+  claims,
+  participants,
+  myParticipantId,
+  onChangeMyQuantity,
+}: {
+  item: GroupItem;
+  claims: SplitItemClaim[];
+  participants: GroupParticipant[];
+  myParticipantId: string;
+  onChangeMyQuantity: (quantity: number) => void;
+}) {
+  const myClaim = claims.find((c) => c.participantId === myParticipantId);
+  const myQuantity = myClaim?.quantity ?? 0;
+  const others = claims.filter((c) => c.participantId !== myParticipantId);
+  const totalClaimed = claims.reduce((sum, c) => sum + c.quantity, 0);
+  const maxForMe = item.quantity - totalClaimed + myQuantity;
+
+  const otherLabels = others
+    .map((c) => {
+      const name = participants.find((p) => p.id === c.participantId)?.name;
+      if (!name) return null;
+      return item.quantity > 1 ? `${name} (${c.quantity})` : name;
+    })
+    .filter((label): label is string => Boolean(label));
+
+  if (item.quantity === 1) {
+    const iClaimed = myQuantity > 0;
+    return (
+      <button
+        onClick={() => onChangeMyQuantity(iClaimed ? 0 : 1)}
+        className={`flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${
+          iClaimed ? "bg-brand-50/60" : "hover:bg-black/[0.02]"
+        }`}
+      >
+        <div
+          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
+            iClaimed ? "border-brand-500 bg-brand-500 text-white" : "border-border"
+          }`}
+        >
+          {iClaimed && <Check size={14} strokeWidth={3} />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[15px] font-medium text-foreground">
+            {item.name}
+          </div>
+          {otherLabels.length > 0 && (
+            <div className="truncate text-xs text-muted">
+              ook: {otherLabels.join(", ")}
+            </div>
+          )}
+        </div>
+        <div className="text-[15px] tabular-nums text-foreground">
+          {formatCents(item.priceCents)}
+        </div>
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className={`flex items-center gap-3 px-4 py-3 ${myQuantity > 0 ? "bg-brand-50/60" : ""}`}
+    >
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[15px] font-medium text-foreground">
+          {item.name}
+          <span className="ml-1.5 text-sm text-muted">×{item.quantity}</span>
+        </div>
+        <div className="truncate text-xs text-muted">
+          {totalClaimed} van de {item.quantity} gekozen
+          {otherLabels.length > 0 && ` — ook: ${otherLabels.join(", ")}`}
+        </div>
+      </div>
+      <div className="text-[15px] tabular-nums text-foreground">
+        {formatCents(item.priceCents)}
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
+        <button
+          aria-label={`Eén minder ${item.name}`}
+          onClick={() => onChangeMyQuantity(Math.max(0, myQuantity - 1))}
+          disabled={myQuantity <= 0}
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-foreground disabled:opacity-30"
+        >
+          <Minus size={14} />
+        </button>
+        <span className="w-5 text-center text-[15px] tabular-nums text-foreground">
+          {myQuantity}
+        </span>
+        <button
+          aria-label={`Eén meer ${item.name}`}
+          onClick={() => onChangeMyQuantity(myQuantity + 1)}
+          disabled={myQuantity >= maxForMe}
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-foreground disabled:opacity-30"
+        >
+          <Plus size={14} />
+        </button>
       </div>
     </div>
   );

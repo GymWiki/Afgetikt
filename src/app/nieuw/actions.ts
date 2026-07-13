@@ -1,12 +1,21 @@
 "use server";
 
 import { createDraftBill } from "@/lib/bills";
+import { consumeCredit, getOrCreateDeviceId, peekRemainingCredits } from "@/lib/credits";
 import { parseReceiptImage, ReceiptParseError } from "@/lib/receipt-parser";
 import { redirect } from "next/navigation";
 
 export type ScanReceiptResult =
   | { ok: true; billId: string; managerToken: string }
-  | { ok: false; error: string };
+  | { ok: false; error: string; outOfCredits?: boolean };
+
+const OUT_OF_CREDITS_MESSAGE =
+  "Je gratis bonnen zijn op. Scan de QR-code van een Afgetikt-restaurant voor een gratis bon — een betaalde versie voor eigen bonnen komt binnenkort.";
+
+function readRestaurantId(formData: FormData): string | null {
+  const raw = formData.get("restaurantId");
+  return typeof raw === "string" && raw ? raw : null;
+}
 
 export async function scanReceiptAction(
   formData: FormData,
@@ -25,7 +34,11 @@ export async function scanReceiptAction(
     return { ok: false, error: "Gebruik een JPEG-, PNG- of WEBP-foto." };
   }
 
-  const restaurantId = formData.get("restaurantId");
+  const restaurantId = readRestaurantId(formData);
+
+  if (!restaurantId && (await peekRemainingCredits()) <= 0) {
+    return { ok: false, outOfCredits: true, error: OUT_OF_CREDITS_MESSAGE };
+  }
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const base64Image = buffer.toString("base64");
@@ -41,9 +54,15 @@ export async function scanReceiptAction(
       {
         title: parsed.restaurantName,
         serviceCents: parsed.serviceCents,
-        restaurantId: typeof restaurantId === "string" ? restaurantId : null,
+        restaurantId,
       },
     );
+
+    if (!restaurantId) {
+      const deviceId = await getOrCreateDeviceId();
+      await consumeCredit(deviceId);
+    }
+
     return { ok: true, billId, managerToken };
   } catch (err) {
     if (err instanceof ReceiptParseError) {
@@ -58,9 +77,18 @@ export async function scanReceiptAction(
 }
 
 export async function startManualBillAction(formData: FormData) {
-  const restaurantId = formData.get("restaurantId");
-  const { billId, managerToken } = await createDraftBill([], {
-    restaurantId: typeof restaurantId === "string" ? restaurantId : null,
-  });
+  const restaurantId = readRestaurantId(formData);
+
+  if (!restaurantId && (await peekRemainingCredits()) <= 0) {
+    redirect("/nieuw?outOfCredits=1");
+  }
+
+  const { billId, managerToken } = await createDraftBill([], { restaurantId });
+
+  if (!restaurantId) {
+    const deviceId = await getOrCreateDeviceId();
+    await consumeCredit(deviceId);
+  }
+
   redirect(`/nieuw/${billId}/controleren?key=${managerToken}`);
 }

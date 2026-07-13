@@ -5,7 +5,7 @@ import {
   getRestaurantStats,
 } from "@/lib/restaurants";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { QrCode } from "lucide-react";
+import { BadgeCheck, QrCode } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -33,10 +33,26 @@ export default async function DashboardHomePage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <StatCard label="Deze maand" value={String(stats.billsThisMonth)} />
-        <StatCard label="Totaal" value={String(stats.totalBills)} />
+        <StatCard label="Totaal gescand" value={String(stats.totalBills)} />
         <StatCard label="Verwerkt bedrag" value={formatCents(stats.totalCents)} />
+        <StatCard label="Betalingen" value={String(stats.paidCount)} />
+      </div>
+
+      <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-4">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+          <BadgeCheck size={18} strokeWidth={2} />
+        </div>
+        <div>
+          <div className="text-[15px] font-medium text-foreground">
+            Gratis tijdens bèta
+          </div>
+          <p className="text-sm text-muted">
+            Betaalde abonnementen volgen binnenkort — je gebruikt Afgetikt tot
+            die tijd kosteloos.
+          </p>
+        </div>
       </div>
 
       {stats.totalBills === 0 ? (

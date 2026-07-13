@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { billItems, bills, itemClaims, participants } from "@/db/schema";
 import {
@@ -209,13 +209,23 @@ export async function joinBill(billId: string, name: string) {
   return { id, accessToken };
 }
 
-export async function setItemClaim(
+export type ClaimQuantityResult =
+  | { ok: true }
+  | { ok: false; error: "not_found" | "exceeds_available" };
+
+/**
+ * Zet de hoeveelheid van `itemId` die `participantId` claimt (0 = niet
+ * geclaimd). Bewaakt dat de som van alle claims op een item nooit meer is
+ * dan item.quantity — bv. bij 6 biertjes kunnen twee mensen samen niet meer
+ * dan 6 claimen.
+ */
+export async function setItemClaimQuantity(
   billId: string,
   participantId: string,
   participantToken: string,
   itemId: string,
-  claimed: boolean,
-) {
+  quantity: number,
+): Promise<ClaimQuantityResult> {
   const participant = await db.query.participants.findFirst({
     where: and(
       eq(participants.id, participantId),
@@ -223,30 +233,54 @@ export async function setItemClaim(
     ),
   });
   if (!participant || participant.accessToken !== participantToken) {
-    return false;
+    return { ok: false, error: "not_found" };
   }
 
   const item = await db.query.billItems.findFirst({
     where: and(eq(billItems.id, itemId), eq(billItems.billId, billId)),
   });
-  if (!item) return false;
+  if (!item) return { ok: false, error: "not_found" };
 
-  if (claimed) {
-    await db
-      .insert(itemClaims)
-      .values({ id: createClaimId(), itemId, participantId })
-      .onConflictDoNothing();
-  } else {
-    await db
-      .delete(itemClaims)
+  const clamped = Math.max(0, Math.min(quantity, item.quantity));
+
+  return db.transaction(async (tx) => {
+    const others = await tx
+      .select({ quantity: itemClaims.quantity })
+      .from(itemClaims)
       .where(
         and(
           eq(itemClaims.itemId, itemId),
-          eq(itemClaims.participantId, participantId),
+          sql`${itemClaims.participantId} != ${participantId}`,
         ),
       );
-  }
-  return true;
+    const claimedByOthers = others.reduce((sum, o) => sum + o.quantity, 0);
+    const available = item.quantity - claimedByOthers;
+
+    if (clamped > available) {
+      return { ok: false, error: "exceeds_available" };
+    }
+
+    if (clamped === 0) {
+      await tx
+        .delete(itemClaims)
+        .where(
+          and(
+            eq(itemClaims.itemId, itemId),
+            eq(itemClaims.participantId, participantId),
+          ),
+        );
+    } else {
+      await tx
+        .insert(itemClaims)
+        .values({ id: createClaimId(), itemId, participantId, quantity: clamped })
+        .onConflictDoUpdate({
+          target: [itemClaims.itemId, itemClaims.participantId],
+          set: { quantity: clamped },
+        });
+    }
+
+    return { ok: true };
+  });
 }
 
 export async function setSelfPaid(

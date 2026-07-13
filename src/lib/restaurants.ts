@@ -78,24 +78,33 @@ export async function getRestaurantStats(restaurantId: string) {
   // db.execute(sql`...`)-template; wel als ISO-string.
   const startOfMonthIso = startOfMonth.toISOString();
 
-  // Per-bill totaal (items + service) eerst apart optellen, en dan pas
-  // over bills sommeren — direct joinen zou het servicebedrag per item
-  // laten vermenigvuldigen ("fan-out").
+  // Per-bill totaal (items + service) en betaalde-deelnemers apart optellen
+  // via lateral subqueries, en dan pas over bills sommeren — direct joinen
+  // zou beide laten vermenigvuldigen ("fan-out").
   const result = await db.execute<{
     bill_count: number;
     bills_this_month: number;
     total_cents: number;
+    paid_count: number;
   }>(sql`
     select
       count(*)::int as bill_count,
       count(*) filter (where b.created_at >= ${startOfMonthIso})::int as bills_this_month,
-      coalesce(sum(b.service_cents + coalesce(items.subtotal_cents, 0)), 0)::int as total_cents
+      coalesce(sum(b.service_cents + coalesce(items.subtotal_cents, 0)), 0)::int as total_cents,
+      coalesce(sum(paid.paid_count), 0)::int as paid_count
     from ${bills} b
     left join lateral (
       select sum(price_cents) as subtotal_cents
       from bill_items
       where bill_items.bill_id = b.id
     ) items on true
+    left join lateral (
+      select count(*) as paid_count
+      from participants
+      where participants.bill_id = b.id
+        and participants.has_paid
+        and not participants.is_payer
+    ) paid on true
     where b.restaurant_id = ${restaurantId} and b.status = 'open'
   `);
 
@@ -104,6 +113,7 @@ export async function getRestaurantStats(restaurantId: string) {
     totalBills: row?.bill_count ?? 0,
     billsThisMonth: row?.bills_this_month ?? 0,
     totalCents: row?.total_cents ?? 0,
+    paidCount: row?.paid_count ?? 0,
   };
 }
 
