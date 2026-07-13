@@ -158,18 +158,24 @@ export function GroupBill({
 
   if (!me) {
     return (
-      <div className="flex flex-col gap-4">
-        <div className="rounded-2xl border border-border bg-surface p-4">
-          <div className="text-sm text-muted">Betaald door</div>
-          <div className="text-[15px] font-medium text-foreground">
-            {payerName}
-          </div>
+      <div className="flex flex-col gap-6">
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">
+            {title ?? "Rekening"}
+          </h1>
+          <p className="mt-1 text-[15px] text-muted">
+            Betaald door {payerName}
+          </p>
         </div>
         <div>
-          <label className="mb-2 block text-sm font-medium text-foreground">
+          <label
+            htmlFor="participant-name"
+            className="mb-2 block text-sm font-medium text-foreground"
+          >
             Wat is je naam?
           </label>
           <Input
+            id="participant-name"
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
             placeholder="Bijv. Sanne"
@@ -192,13 +198,15 @@ export function GroupBill({
     >
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-sm text-muted">{title ?? "Rekening"}</div>
-          <div className="text-[15px] text-foreground">
+          <h1 className="text-sm font-normal text-muted">
+            {title ?? "Rekening"}
+          </h1>
+          <p className="text-[15px] text-foreground">
             Hoi {meParticipant?.name} — betaald door {payerName}
-          </div>
+          </p>
         </div>
         <button
-          className="shrink-0 text-xs text-muted underline underline-offset-4"
+          className="-m-2 shrink-0 p-2 text-xs text-muted underline underline-offset-4"
           onClick={() => {
             clearParticipant(billId);
             setMe(null);
@@ -258,7 +266,7 @@ export function GroupBill({
       </div>
 
       {split.unclaimedCents > 0 && (
-        <p className="text-center text-xs text-muted">
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-center text-sm text-amber-800">
           Nog {formatCents(split.unclaimedCents)} aan producten niet gekozen
           door iemand.
         </p>
@@ -350,7 +358,7 @@ function PaidList({
                     Betaald
                   </span>
                 ) : (
-                  <span className="rounded-full bg-black/[0.04] px-2 py-0.5 text-xs text-muted">
+                  <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
                     Nog niet
                   </span>
                 )}

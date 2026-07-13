@@ -36,9 +36,9 @@ export default async function StickerPage() {
           dangerouslySetInnerHTML={{ __html: svg }}
         />
         <div>
-          <div className="text-xl font-semibold text-foreground">
+          <h1 className="text-xl font-semibold text-foreground">
             Scan &amp; tik af
-          </div>
+          </h1>
           <p className="mt-1 text-[15px] text-muted">
             Fotografeer de bon, deel de link, betaal je deel.
           </p>

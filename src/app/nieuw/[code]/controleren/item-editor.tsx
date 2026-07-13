@@ -1,10 +1,10 @@
 "use client";
 
 import { Button, ButtonLink } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input, Label } from "@/components/ui/input";
 import { formatCents, parseAmountToCents } from "@/lib/money";
 import { Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import type { ItemActionResult } from "./actions";
 
 export type EditableItem = {
@@ -106,14 +106,14 @@ export function ItemEditor({
               </div>
               <button
                 aria-label="Product bewerken"
-                className="rounded-lg p-1.5 text-muted hover:bg-black/[0.04] hover:text-foreground"
+                className="-my-2.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-black/[0.04] hover:text-foreground"
                 onClick={() => setEditingId(item.id)}
               >
                 <Pencil size={16} />
               </button>
               <button
                 aria-label="Product verwijderen"
-                className="rounded-lg p-1.5 text-muted hover:bg-red-50 hover:text-red-600"
+                className="-my-2.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-red-50 hover:text-red-600"
                 disabled={isPending}
                 onClick={() =>
                   withPendingItem(async () => {
@@ -216,6 +216,11 @@ function ItemForm({
   onCancel: () => void;
   onSubmit: (formData: FormData) => void;
 }) {
+  const id = useId();
+  const nameId = `${id}-name`;
+  const quantityId = `${id}-quantity`;
+  const priceId = `${id}-price`;
+
   return (
     <form
       className="flex flex-col gap-3 p-4"
@@ -225,32 +230,50 @@ function ItemForm({
       }}
     >
       <div className="flex gap-2">
+        <div className="flex-[3]">
+          <Label htmlFor={nameId} className="mb-1 text-xs">
+            Productnaam
+          </Label>
+          <Input
+            id={nameId}
+            name="name"
+            placeholder="Bijv. Kaasplankje"
+            defaultValue={initial?.name}
+            required
+            autoFocus
+          />
+        </div>
+        <div className="flex-1">
+          <Label htmlFor={quantityId} className="mb-1 text-xs">
+            Aantal
+          </Label>
+          <Input
+            id={quantityId}
+            name="quantity"
+            type="number"
+            min={1}
+            inputMode="numeric"
+            defaultValue={initial?.quantity ?? 1}
+          />
+        </div>
+      </div>
+      <div>
+        <Label htmlFor={priceId} className="mb-1 text-xs">
+          Totaalprijs
+        </Label>
         <Input
-          name="name"
-          placeholder="Productnaam"
-          defaultValue={initial?.name}
+          id={priceId}
+          name="price"
+          placeholder="Bijv. 12,50"
+          inputMode="decimal"
+          defaultValue={
+            initial
+              ? (initial.priceCents / 100).toFixed(2).replace(".", ",")
+              : ""
+          }
           required
-          autoFocus
-          className="flex-[3]"
-        />
-        <Input
-          name="quantity"
-          type="number"
-          min={1}
-          inputMode="numeric"
-          defaultValue={initial?.quantity ?? 1}
-          className="flex-1"
         />
       </div>
-      <Input
-        name="price"
-        placeholder="Totaalprijs, bv. 12,50"
-        inputMode="decimal"
-        defaultValue={
-          initial ? (initial.priceCents / 100).toFixed(2).replace(".", ",") : ""
-        }
-        required
-      />
       <div className="flex gap-2">
         <Button type="submit" className="flex-1">
           {submitLabel}

@@ -123,7 +123,7 @@ export function ManagerDashboard({
                   className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                     p.hasPaid
                       ? "bg-brand-500 text-white"
-                      : "bg-black/[0.05] text-muted hover:bg-black/[0.08]"
+                      : "bg-red-50 text-red-700 hover:bg-red-100"
                   }`}
                 >
                   {p.hasPaid && <Check size={14} strokeWidth={3} />}
