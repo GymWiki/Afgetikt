@@ -74,6 +74,9 @@ export async function getRestaurantStats(restaurantId: string) {
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
+  // postgres-js kan een raw Date niet als sql-parameter serialiseren in een
+  // db.execute(sql`...`)-template; wel als ISO-string.
+  const startOfMonthIso = startOfMonth.toISOString();
 
   // Per-bill totaal (items + service) eerst apart optellen, en dan pas
   // over bills sommeren — direct joinen zou het servicebedrag per item
@@ -85,7 +88,7 @@ export async function getRestaurantStats(restaurantId: string) {
   }>(sql`
     select
       count(*)::int as bill_count,
-      count(*) filter (where b.created_at >= ${startOfMonth})::int as bills_this_month,
+      count(*) filter (where b.created_at >= ${startOfMonthIso})::int as bills_this_month,
       coalesce(sum(b.service_cents + coalesce(items.subtotal_cents, 0)), 0)::int as total_cents
     from ${bills} b
     left join lateral (
