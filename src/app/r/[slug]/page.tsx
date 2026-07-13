@@ -4,6 +4,10 @@ import { startManualBillAction } from "@/app/nieuw/actions";
 import { getRestaurantBySlug } from "@/lib/restaurants";
 import { notFound } from "next/navigation";
 
+// Bonherkenning via Claude Vision kan langer duren dan het standaard
+// serverless-timeout; verruim dit voor de Server Action op deze pagina.
+export const maxDuration = 60;
+
 export default async function RestaurantQrLandingPage({
   params,
 }: {

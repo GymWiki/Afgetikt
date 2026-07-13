@@ -4,6 +4,10 @@ import Link from "next/link";
 import { ReceiptUploader } from "./receipt-uploader";
 import { startManualBillAction } from "./actions";
 
+// Bonherkenning via Claude Vision kan langer duren dan het standaard
+// serverless-timeout; verruim dit voor de Server Action op deze pagina.
+export const maxDuration = 60;
+
 export default async function NieuwePage({
   searchParams,
 }: {

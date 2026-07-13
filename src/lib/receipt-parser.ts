@@ -42,30 +42,43 @@ export async function parseReceiptImage(params: {
   const client = new Anthropic({ apiKey });
   const model = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5-20251001";
 
-  const response = await client.messages.create({
-    model,
-    max_tokens: 2048,
-    system: SYSTEM_PROMPT,
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "image",
-            source: {
-              type: "base64",
-              media_type: params.mediaType,
-              data: params.base64Image,
+  let response: Anthropic.Messages.Message;
+  try {
+    response = await client.messages.create({
+      model,
+      max_tokens: 2048,
+      system: SYSTEM_PROMPT,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: params.mediaType,
+                data: params.base64Image,
+              },
             },
-          },
-          {
-            type: "text",
-            text: "Zet deze bon om naar het afgesproken JSON-formaat.",
-          },
-        ],
-      },
-    ],
-  });
+            {
+              type: "text",
+              text: "Zet deze bon om naar het afgesproken JSON-formaat.",
+            },
+          ],
+        },
+      ],
+    });
+  } catch (err) {
+    console.error("receipt-parser: Anthropic API-aanroep mislukt", err);
+    if (err instanceof Anthropic.APIError && (err.status === 429 || err.status === 529)) {
+      throw new ReceiptParseError(
+        "Het is nu erg druk. Probeer het over een paar seconden opnieuw.",
+      );
+    }
+    throw new ReceiptParseError(
+      "Het lukte niet om de bon te lezen. Probeer het opnieuw.",
+    );
+  }
 
   const textBlock = response.content.find((block) => block.type === "text");
   if (!textBlock || textBlock.type !== "text") {
