@@ -2,6 +2,7 @@
 
 import { publishBill } from "@/lib/bills";
 import { parseAmountToCents } from "@/lib/money";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
 export type PublishResult = { ok: true } | { ok: false; error: string };
@@ -52,16 +53,23 @@ export async function publishBillAction(
   const serviceCents =
     serviceInput === "" ? 0 : (parseAmountToCents(serviceInput) ?? 0);
 
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const result = await publishBill(billId, managerToken, {
     payerName,
     paymentLink,
     serviceCents,
+    ownerUserId: user?.id ?? null,
   });
   if (!result) {
     return { ok: false, error: "Deze rekening kon niet worden gepubliceerd." };
   }
 
+  const nextStep = user ? "klaar" : "account";
   redirect(
-    `/nieuw/${billId}/klaar?key=${managerToken}&pid=${result.payerId}&ptoken=${result.payerAccessToken}`,
+    `/nieuw/${billId}/${nextStep}?key=${managerToken}&pid=${result.payerId}&ptoken=${result.payerAccessToken}`,
   );
 }

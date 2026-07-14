@@ -1,0 +1,1 @@
+ALTER TABLE "bills" ADD COLUMN "owner_user_id" text;

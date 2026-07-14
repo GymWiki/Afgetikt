@@ -54,6 +54,10 @@ export const bills = pgTable("bills", {
   // Los geheim nodig om bij /b/[id]/beheer te komen; nooit gedeeld met deelnemers.
   managerToken: text("manager_token").notNull().unique(),
   restaurantId: text("restaurant_id").references(() => restaurants.id),
+  // Supabase Auth user id van de hoofdbetaler, pas bekend zodra die (vlak
+  // voor delen) een account aanmaakt of inlogt. Null voor bonnen van vóór
+  // het dashboard, of als het account-moment nooit is afgerond.
+  ownerUserId: text("owner_user_id"),
   title: text("title"),
   payerName: text("payer_name"),
   paymentLink: text("payment_link"),

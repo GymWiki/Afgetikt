@@ -130,7 +130,12 @@ export async function deleteBillItem(
 export async function publishBill(
   billId: string,
   managerToken: string,
-  params: { payerName: string; paymentLink: string; serviceCents: number },
+  params: {
+    payerName: string;
+    paymentLink: string;
+    serviceCents: number;
+    ownerUserId: string | null;
+  },
 ) {
   const bill = await requireDraftBill(billId, managerToken);
   if (!bill) return null;
@@ -145,6 +150,7 @@ export async function publishBill(
         payerName: params.payerName,
         paymentLink: params.paymentLink,
         serviceCents: params.serviceCents,
+        ownerUserId: params.ownerUserId,
         status: "open",
         updatedAt: new Date(),
       })
@@ -161,6 +167,86 @@ export async function publishBill(
   });
 
   return { payerId, payerAccessToken };
+}
+
+// Koppelt een account met terugwerkende kracht aan een al gepubliceerde bon
+// — het account-moment zit vlak vóór het delen, dus de bon bestaat en is al
+// 'open' op het moment dat dit aangeroepen wordt.
+export async function claimBill(
+  billId: string,
+  managerToken: string,
+  ownerUserId: string,
+): Promise<boolean> {
+  const result = await db
+    .update(bills)
+    .set({ ownerUserId })
+    .where(and(eq(bills.id, billId), eq(bills.managerToken, managerToken)))
+    .returning({ id: bills.id });
+  return result.length > 0;
+}
+
+export type OwnerBillSummary = {
+  id: string;
+  managerToken: string;
+  title: string | null;
+  createdAt: Date;
+  totalCents: number;
+  paidCount: number;
+  participantCount: number;
+};
+
+export async function getBillsForOwner(
+  ownerUserId: string,
+): Promise<OwnerBillSummary[]> {
+  const result = await db.execute<{
+    id: string;
+    manager_token: string;
+    title: string | null;
+    created_at: Date;
+    total_cents: number;
+    paid_count: number;
+    participant_count: number;
+  }>(sql`
+    select
+      b.id,
+      b.manager_token,
+      b.title,
+      b.created_at,
+      (b.service_cents + coalesce(items.subtotal_cents, 0))::int as total_cents,
+      coalesce(paid.paid_count, 0)::int as paid_count,
+      coalesce(cnt.participant_count, 0)::int as participant_count
+    from ${bills} b
+    left join lateral (
+      select sum(price_cents) as subtotal_cents
+      from bill_items
+      where bill_items.bill_id = b.id
+    ) items on true
+    left join lateral (
+      select count(*) as paid_count
+      from participants
+      where participants.bill_id = b.id
+        and participants.has_paid
+        and not participants.is_payer
+    ) paid on true
+    left join lateral (
+      select count(*) as participant_count
+      from participants
+      where participants.bill_id = b.id
+        and not participants.is_payer
+    ) cnt on true
+    where b.owner_user_id = ${ownerUserId} and b.status = 'open'
+    order by b.created_at desc
+  `);
+
+  return result.map((row) => ({
+    id: row.id,
+    managerToken: row.manager_token,
+    title: row.title,
+    createdAt: row.created_at,
+    totalCents: row.total_cents,
+    paidCount: row.paid_count,
+    participantCount: row.participant_count,
+  }));
 }
 
 export async function getOpenBillPublic(billId: string) {

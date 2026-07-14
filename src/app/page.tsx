@@ -1,5 +1,6 @@
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   BarChart3,
   Camera,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 const steps = [
   {
@@ -58,7 +60,13 @@ const trustPoints = [
   "Afgetikt verwerkt zelf geen betalingen — rechtstreeks naar jouw Tikkie of betaalverzoek",
 ];
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) redirect("/dashboard");
+
   return (
     <div className="flex flex-1 flex-col">
       <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-5 py-6">
