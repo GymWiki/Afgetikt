@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { restaurantPlans, type RestaurantPlan } from "@/lib/mollie";
 import { formatCents } from "@/lib/money";
+import { staggerDelay } from "@/lib/motion";
 import { Check } from "lucide-react";
 import { useState, useTransition } from "react";
 import { startSubscriptionAction } from "./actions";
@@ -29,12 +30,13 @@ export function PlanPicker() {
 
   return (
     <div className="flex flex-col gap-3">
-      {planOrder.map((plan) => {
+      {planOrder.map((plan, index) => {
         const config = restaurantPlans[plan];
         return (
           <div
             key={plan}
-            className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-surface p-5"
+            className="flex animate-fade-up items-center justify-between gap-4 rounded-2xl border border-border bg-surface p-5"
+            style={staggerDelay(index, 80)}
           >
             <div>
               <div className="text-[15px] font-semibold text-foreground">

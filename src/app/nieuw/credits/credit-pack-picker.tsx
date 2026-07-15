@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { creditPacks, type CreditPackType } from "@/lib/mollie";
 import { formatCents } from "@/lib/money";
+import { staggerDelay } from "@/lib/motion";
 import { Check, Infinity as InfinityIcon, Ticket } from "lucide-react";
 import { useState, useTransition } from "react";
 import { purchaseCreditsAction } from "./actions";
@@ -29,13 +30,14 @@ export function CreditPackPicker() {
 
   return (
     <div className="flex flex-col gap-3">
-      {packOrder.map((packType) => {
+      {packOrder.map((packType, index) => {
         const pack = creditPacks[packType];
         const isPro = packType === "pro";
         return (
           <div
             key={packType}
-            className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-surface p-5"
+            className="flex animate-fade-up items-center justify-between gap-4 rounded-2xl border border-border bg-surface p-5"
+            style={staggerDelay(index, 80)}
           >
             <div className="flex items-start gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600">

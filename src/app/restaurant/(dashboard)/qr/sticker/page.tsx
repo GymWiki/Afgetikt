@@ -21,7 +21,7 @@ export default async function StickerPage() {
         </ButtonLink>
       </div>
 
-      <div className="flex aspect-[3/4] w-full max-w-sm flex-col items-center justify-center gap-6 rounded-3xl border border-border bg-surface p-10 text-center print:aspect-auto print:min-h-screen print:w-full print:max-w-none print:rounded-none print:border-0">
+      <div className="flex aspect-[3/4] w-full max-w-sm animate-fade-up flex-col items-center justify-center gap-6 rounded-3xl border border-border bg-surface p-10 text-center print:aspect-auto print:min-h-screen print:w-full print:max-w-none print:rounded-none print:border-0">
         <div className="text-sm font-medium tracking-wide text-muted uppercase">
           {restaurant.name}
         </div>

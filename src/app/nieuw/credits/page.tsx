@@ -14,7 +14,7 @@ export default function CreditsPage() {
         Terug
       </Link>
 
-      <div>
+      <div className="animate-fade-up">
         <h1 className="text-xl font-semibold text-foreground">Meer bonnen scannen</h1>
         <p className="mt-1 text-[15px] text-muted">
           Koop een pakket en ga direct verder. Via de QR-code van een

@@ -33,7 +33,7 @@ export function PurchaseStatus({
   if (status === "paid") {
     return (
       <>
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+        <div className="flex h-14 w-14 animate-pop items-center justify-center rounded-full bg-brand-50 text-brand-600">
           <CircleCheck size={28} strokeWidth={2} />
         </div>
         <div>
@@ -52,7 +52,7 @@ export function PurchaseStatus({
   if (status === "failed" || attempts >= MAX_POLLS) {
     return (
       <>
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-600">
+        <div className="flex h-14 w-14 animate-pop items-center justify-center rounded-full bg-red-50 text-red-600">
           <CircleX size={28} strokeWidth={2} />
         </div>
         <div>

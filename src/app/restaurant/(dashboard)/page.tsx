@@ -1,5 +1,6 @@
 import { formatCents } from "@/lib/money";
 import { isAccessBlocked, trialDaysLeft } from "@/lib/billing";
+import { staggerDelay } from "@/lib/motion";
 import { getRecentBills, getRestaurantStats, requireCurrentRestaurant } from "@/lib/restaurants";
 import { BadgeCheck, Hourglass, QrCode } from "lucide-react";
 import Link from "next/link";
@@ -21,7 +22,7 @@ export default async function DashboardHomePage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div>
+      <div className="animate-fade-up">
         <h1 className="text-xl font-semibold text-foreground">Overzicht</h1>
         <p className="mt-1 text-[15px] text-muted">
           Bonnetjes verwerkt via jouw QR-code.
@@ -29,16 +30,17 @@ export default async function DashboardHomePage() {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <StatCard label="Deze maand" value={String(stats.billsThisMonth)} />
-        <StatCard label="Totaal gescand" value={String(stats.totalBills)} />
-        <StatCard label="Verwerkt bedrag" value={formatCents(stats.totalCents)} />
-        <StatCard label="Betalingen" value={String(stats.paidCount)} />
+        <StatCard label="Deze maand" value={String(stats.billsThisMonth)} index={0} />
+        <StatCard label="Totaal gescand" value={String(stats.totalBills)} index={1} />
+        <StatCard label="Verwerkt bedrag" value={formatCents(stats.totalCents)} index={2} />
+        <StatCard label="Betalingen" value={String(stats.paidCount)} index={3} />
       </div>
 
       {restaurant.subscriptionStatus === "trialing" ? (
         <Link
           href="/restaurant/abonnement"
-          className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-4 hover:border-brand-400/40"
+          className="flex animate-fade-up items-center gap-3 rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-brand-400/40"
+          style={staggerDelay(4, 60)}
         >
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600">
             <Hourglass size={18} strokeWidth={2} />
@@ -53,7 +55,10 @@ export default async function DashboardHomePage() {
           </div>
         </Link>
       ) : (
-        <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-4">
+        <div
+          className="flex animate-fade-up items-center gap-3 rounded-2xl border border-border bg-surface p-4"
+          style={staggerDelay(4, 60)}
+        >
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600">
             <BadgeCheck size={18} strokeWidth={2} />
           </div>
@@ -73,8 +78,11 @@ export default async function DashboardHomePage() {
       )}
 
       {stats.totalBills === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-surface p-10 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+        <div
+          className="flex animate-fade-up flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-surface p-10 text-center"
+          style={staggerDelay(5, 60)}
+        >
+          <div className="flex h-12 w-12 animate-pop items-center justify-center rounded-full bg-brand-50 text-brand-600">
             <QrCode size={22} strokeWidth={2} />
           </div>
           <div>
@@ -98,10 +106,11 @@ export default async function DashboardHomePage() {
             Recente rekeningen
           </div>
           <ul className="flex flex-col divide-y divide-border rounded-2xl border border-border bg-surface">
-            {recentBills.map((bill) => (
+            {recentBills.map((bill, index) => (
               <li
                 key={bill.id}
-                className="flex items-center justify-between px-4 py-3.5"
+                className="flex animate-fade-up items-center justify-between px-4 py-3.5"
+                style={staggerDelay(index, 40)}
               >
                 <div>
                   <div className="text-[15px] font-medium text-foreground">
@@ -128,9 +137,20 @@ export default async function DashboardHomePage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({
+  label,
+  value,
+  index,
+}: {
+  label: string;
+  value: string;
+  index: number;
+}) {
   return (
-    <div className="rounded-2xl border border-border bg-surface p-4">
+    <div
+      className="animate-fade-up rounded-2xl border border-border bg-surface p-4"
+      style={staggerDelay(index, 60)}
+    >
       <div className="text-xs text-muted">{label}</div>
       <div className="mt-1 text-lg font-semibold tabular-nums text-foreground">
         {value}

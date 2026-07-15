@@ -2,6 +2,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
 import { getBillsForOwner, type OwnerBillSummary } from "@/lib/bills";
 import { formatCents } from "@/lib/money";
+import { staggerDelay } from "@/lib/motion";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Camera, CircleCheck, Receipt } from "lucide-react";
 import Link from "next/link";
@@ -36,7 +37,7 @@ export default async function DashboardPage() {
       </header>
 
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-5 py-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex animate-fade-up flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-xl font-semibold text-foreground">
               Jouw bonnen
@@ -50,8 +51,11 @@ export default async function DashboardPage() {
         </div>
 
         {bills.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-surface p-10 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+          <div
+            className="flex animate-fade-up flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-surface p-10 text-center"
+            style={staggerDelay(1, 80)}
+          >
+            <div className="flex h-12 w-12 animate-pop items-center justify-center rounded-full bg-brand-50 text-brand-600">
               <Receipt size={22} strokeWidth={2} />
             </div>
             <div>
@@ -66,8 +70,8 @@ export default async function DashboardPage() {
           </div>
         ) : (
           <ul className="flex flex-col divide-y divide-border rounded-2xl border border-border bg-surface">
-            {bills.map((bill) => (
-              <BillRow key={bill.id} bill={bill} />
+            {bills.map((bill, index) => (
+              <BillRow key={bill.id} bill={bill} index={index} />
             ))}
           </ul>
         )}
@@ -76,11 +80,11 @@ export default async function DashboardPage() {
   );
 }
 
-function BillRow({ bill }: { bill: OwnerBillSummary }) {
+function BillRow({ bill, index }: { bill: OwnerBillSummary; index: number }) {
   const allPaid = bill.participantCount > 0 && bill.paidCount === bill.participantCount;
 
   return (
-    <li>
+    <li className="animate-fade-up" style={staggerDelay(index, 50)}>
       <Link
         href={`/b/${bill.id}/beheer?key=${bill.managerToken}`}
         className="flex items-center justify-between gap-4 px-4 py-4 transition-colors hover:bg-brand-50/40"

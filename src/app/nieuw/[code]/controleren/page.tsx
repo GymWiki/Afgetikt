@@ -20,7 +20,7 @@ export default async function ControlerenPage({
 
   return (
     <PageShell className="gap-6">
-      <div>
+      <div className="animate-fade-up">
         <div className="text-sm text-muted">Stap 1 van 2</div>
         <h1 className="text-xl font-semibold text-foreground">
           Klopt de bon?

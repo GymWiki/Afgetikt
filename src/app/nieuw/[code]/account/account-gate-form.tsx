@@ -40,8 +40,8 @@ export function AccountGateForm({
 
   if (confirmEmail) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-surface p-6 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+      <div className="flex animate-fade-up flex-col items-center gap-3 rounded-2xl border border-border bg-surface p-6 text-center">
+        <div className="flex h-12 w-12 animate-pop items-center justify-center rounded-full bg-brand-50 text-brand-600">
           <MailCheck size={22} strokeWidth={2} />
         </div>
         <div>

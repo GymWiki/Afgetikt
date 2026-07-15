@@ -18,7 +18,7 @@ export default function GlobalError({
 
   return (
     <PageShell className="flex-1 items-center justify-center gap-4 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-600">
+      <div className="flex h-14 w-14 animate-pop items-center justify-center rounded-full bg-red-50 text-red-600">
         <TriangleAlert size={26} strokeWidth={2} />
       </div>
       <div>

@@ -10,7 +10,7 @@ export default function NieuwRestaurantPage() {
         Terug
       </ButtonLink>
 
-      <div>
+      <div className="animate-fade-up">
         <h1 className="text-xl font-semibold text-foreground">
           Nieuw restaurant toevoegen
         </h1>
@@ -20,7 +20,10 @@ export default function NieuwRestaurantPage() {
         </p>
       </div>
 
-      <div className="max-w-sm rounded-2xl border border-border bg-surface p-5">
+      <div
+        className="max-w-sm animate-fade-up rounded-2xl border border-border bg-surface p-5"
+        style={{ animationDelay: "80ms" }}
+      >
         <NewRestaurantForm />
       </div>
     </div>

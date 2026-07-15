@@ -5,7 +5,7 @@ import { LoginForm } from "./login-form";
 export default function InloggenPage() {
   return (
     <PageShell className="gap-6">
-      <div>
+      <div className="animate-fade-up">
         <div className="mb-1 text-sm font-semibold tracking-wide text-brand-600">
           Afgetikt voor restaurants
         </div>
@@ -14,7 +14,9 @@ export default function InloggenPage() {
         </h1>
       </div>
 
-      <LoginForm />
+      <div className="animate-fade-up" style={{ animationDelay: "80ms" }}>
+        <LoginForm />
+      </div>
 
       <p className="text-center text-sm text-muted">
         Nog geen account?{" "}

@@ -12,14 +12,16 @@ export default async function InloggenPage({
 
   return (
     <PageShell className="gap-6">
-      <div>
+      <div className="animate-fade-up">
         <h1 className="text-xl font-semibold text-foreground">Inloggen</h1>
         <p className="mt-1 text-[15px] text-muted">
           Log in om je bonnen terug te zien.
         </p>
       </div>
 
-      <LoginForm next={safeNext} />
+      <div className="animate-fade-up" style={{ animationDelay: "80ms" }}>
+        <LoginForm next={safeNext} />
+      </div>
 
       <p className="text-center text-sm text-muted">
         Nog geen account?{" "}

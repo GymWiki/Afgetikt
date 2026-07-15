@@ -5,7 +5,7 @@ import { SearchX } from "lucide-react";
 export default function NotFound() {
   return (
     <PageShell className="flex-1 items-center justify-center gap-4 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/[0.04] text-muted">
+      <div className="flex h-14 w-14 animate-pop items-center justify-center rounded-full bg-black/[0.04] text-muted">
         <SearchX size={26} strokeWidth={2} />
       </div>
       <div>

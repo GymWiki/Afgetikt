@@ -20,7 +20,7 @@ export default async function BetaallinkPage({
 
   return (
     <PageShell className="gap-6">
-      <div>
+      <div className="animate-fade-up">
         <div className="text-sm text-muted">Stap 2 van 2</div>
         <h1 className="text-xl font-semibold text-foreground">
           Hoe kunnen ze jou betalen?

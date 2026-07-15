@@ -18,10 +18,10 @@ export default async function KlaarPage({
   return (
     <PageShell className="gap-6">
       <div className="flex flex-col items-center gap-3 pt-4 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+        <div className="flex h-14 w-14 animate-pop items-center justify-center rounded-full bg-brand-50 text-brand-600">
           <CircleCheck size={28} strokeWidth={2} />
         </div>
-        <div>
+        <div className="animate-fade-up" style={{ animationDelay: "100ms" }}>
           <h1 className="text-xl font-semibold text-foreground">
             De rekening staat klaar
           </h1>
@@ -32,12 +32,14 @@ export default async function KlaarPage({
         </div>
       </div>
 
-      <ShareCard
-        billId={code}
-        managerToken={key}
-        payerId={pid}
-        payerAccessToken={ptoken}
-      />
+      <div className="animate-fade-up" style={{ animationDelay: "200ms" }}>
+        <ShareCard
+          billId={code}
+          managerToken={key}
+          payerId={pid}
+          payerAccessToken={ptoken}
+        />
+      </div>
     </PageShell>
   );
 }

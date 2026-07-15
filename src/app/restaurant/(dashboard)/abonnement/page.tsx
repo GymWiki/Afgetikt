@@ -11,7 +11,7 @@ export default async function AbonnementPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div>
+      <div className="animate-fade-up">
         <h1 className="text-xl font-semibold text-foreground">Abonnement</h1>
         <p className="mt-1 text-[15px] text-muted">
           {restaurant.name} — €19,99 per maand of €190 per jaar, per
@@ -19,16 +19,18 @@ export default async function AbonnementPage() {
         </p>
       </div>
 
-      <StatusCard
-        status={restaurant.subscriptionStatus}
-        blocked={blocked}
-        daysLeft={daysLeft}
-        plan={restaurant.subscriptionPlan}
-        periodEnd={restaurant.currentPeriodEnd}
-      />
+      <div className="animate-fade-up" style={{ animationDelay: "80ms" }}>
+        <StatusCard
+          status={restaurant.subscriptionStatus}
+          blocked={blocked}
+          daysLeft={daysLeft}
+          plan={restaurant.subscriptionPlan}
+          periodEnd={restaurant.currentPeriodEnd}
+        />
+      </div>
 
       {restaurant.subscriptionStatus !== "active" && (
-        <div>
+        <div className="animate-fade-up" style={{ animationDelay: "140ms" }}>
           <div className="mb-3 text-xs font-medium uppercase tracking-wide text-muted">
             Kies een plan
           </div>

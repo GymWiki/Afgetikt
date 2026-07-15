@@ -5,7 +5,7 @@ import { RegisterForm } from "./register-form";
 export default function RegistrerenPage() {
   return (
     <PageShell className="gap-6">
-      <div>
+      <div className="animate-fade-up">
         <div className="mb-1 text-sm font-semibold tracking-wide text-brand-600">
           Afgetikt voor restaurants
         </div>
@@ -17,7 +17,9 @@ export default function RegistrerenPage() {
         </p>
       </div>
 
-      <RegisterForm />
+      <div className="animate-fade-up" style={{ animationDelay: "80ms" }}>
+        <RegisterForm />
+      </div>
 
       <p className="text-center text-sm text-muted">
         Al een account?{" "}

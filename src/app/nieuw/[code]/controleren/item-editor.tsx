@@ -3,6 +3,7 @@
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { formatCents, parseAmountToCents } from "@/lib/money";
+import { staggerDelay } from "@/lib/motion";
 import { Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useId, useState, useTransition } from "react";
 import type { ItemActionResult } from "./actions";
@@ -56,7 +57,7 @@ export function ItemEditor({
             Nog geen producten. Voeg hieronder je eerste product toe.
           </p>
         )}
-        {items.map((item) =>
+        {items.map((item, index) =>
           editingId === item.id ? (
             <ItemForm
               key={item.id}
@@ -90,7 +91,11 @@ export function ItemEditor({
               }
             />
           ) : (
-            <div key={item.id} className="flex items-center gap-3 px-4 py-3">
+            <div
+              key={item.id}
+              className="flex animate-fade-up items-center gap-3 px-4 py-3"
+              style={staggerDelay(index, 40)}
+            >
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[15px] font-medium text-foreground">
                   {item.name}
@@ -134,7 +139,7 @@ export function ItemEditor({
       </div>
 
       {adding ? (
-        <div className="rounded-2xl border border-border bg-surface">
+        <div className="animate-fade-up rounded-2xl border border-border bg-surface">
           <ItemForm
             submitLabel="Toevoegen"
             onCancel={() => setAdding(false)}

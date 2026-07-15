@@ -9,6 +9,7 @@ import {
   storeParticipantToken,
 } from "@/lib/client-session";
 import { formatCents, formatCentsForClipboard } from "@/lib/money";
+import { staggerDelay } from "@/lib/motion";
 import { calculateSplit, type SplitItemClaim } from "@/lib/split";
 import { Check, ExternalLink, Loader2, Minus, Plus } from "lucide-react";
 import Link from "next/link";
@@ -196,7 +197,7 @@ export function GroupBill({
   if (!me) {
     return (
       <div className="flex flex-col gap-6">
-        <div>
+        <div className="animate-fade-up">
           <h1 className="text-xl font-semibold text-foreground">
             {title ?? "Rekening"}
           </h1>
@@ -204,7 +205,7 @@ export function GroupBill({
             Betaald door {payerName}
           </p>
         </div>
-        <div>
+        <div className="animate-fade-up" style={staggerDelay(1, 80)}>
           <label
             htmlFor="participant-name"
             className="mb-2 block text-sm font-medium text-foreground"
@@ -254,10 +255,11 @@ export function GroupBill({
       </div>
 
       <div className="flex flex-col divide-y divide-border rounded-2xl border border-border bg-surface">
-        {items.map((item) => (
+        {items.map((item, index) => (
           <ItemRow
             key={item.id}
             item={item}
+            index={index}
             claims={claimsByItem[item.id] ?? []}
             participants={participants}
             myParticipantId={me.participantId}
@@ -308,7 +310,7 @@ export function GroupBill({
             )
           ) : meParticipant?.hasPaid ? (
             <Button variant="secondary" onClick={toggleSelfPaid}>
-              <Check size={16} />
+              <Check size={16} className="animate-pop" />
               Betaald
             </Button>
           ) : (
@@ -330,12 +332,14 @@ export function GroupBill({
 
 function ItemRow({
   item,
+  index,
   claims,
   participants,
   myParticipantId,
   onChangeMyQuantity,
 }: {
   item: GroupItem;
+  index: number;
   claims: SplitItemClaim[];
   participants: GroupParticipant[];
   myParticipantId: string;
@@ -360,16 +364,17 @@ function ItemRow({
     return (
       <button
         onClick={() => onChangeMyQuantity(iClaimed ? 0 : 1)}
-        className={`flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${
+        className={`flex animate-fade-up items-center gap-3 px-4 py-3.5 text-left transition-colors ${
           iClaimed ? "bg-brand-50/60" : "hover:bg-black/[0.02]"
         }`}
+        style={staggerDelay(index, 40)}
       >
         <div
-          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
+          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-200 ${
             iClaimed ? "border-brand-500 bg-brand-500 text-white" : "border-border"
           }`}
         >
-          {iClaimed && <Check size={14} strokeWidth={3} />}
+          {iClaimed && <Check size={14} strokeWidth={3} className="animate-pop" />}
         </div>
         <div className="min-w-0 flex-1">
           <div className="truncate text-[15px] font-medium text-foreground">
@@ -390,7 +395,8 @@ function ItemRow({
 
   return (
     <div
-      className={`flex items-center gap-3 px-4 py-3 ${myQuantity > 0 ? "bg-brand-50/60" : ""}`}
+      className={`flex animate-fade-up items-center gap-3 px-4 py-3 transition-colors duration-200 ${myQuantity > 0 ? "bg-brand-50/60" : ""}`}
+      style={staggerDelay(index, 40)}
     >
       <div className="min-w-0 flex-1">
         <div className="truncate text-[15px] font-medium text-foreground">
@@ -448,17 +454,21 @@ function PaidList({
         Status ({payerName} ziet dit ook)
       </div>
       <ul className="flex flex-col gap-2.5">
-        {others.map((p) => {
+        {others.map((p, index) => {
           const total = splitTotals.find((s) => s.participantId === p.id);
           return (
-            <li key={p.id} className="flex items-center justify-between text-sm">
+            <li
+              key={p.id}
+              className="flex animate-fade-up items-center justify-between text-sm"
+              style={staggerDelay(index, 40)}
+            >
               <span className="text-foreground">{p.name}</span>
               <span className="flex items-center gap-2">
                 <span className="tabular-nums text-muted">
                   {formatCents(total?.totalCents ?? 0)}
                 </span>
                 {p.hasPaid ? (
-                  <span className="flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
+                  <span className="flex animate-pop items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
                     <Check size={12} strokeWidth={3} />
                     Betaald
                   </span>

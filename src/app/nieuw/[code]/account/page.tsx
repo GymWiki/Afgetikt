@@ -33,7 +33,7 @@ export default async function AccountGatePage({
 
   return (
     <PageShell className="gap-6">
-      <div>
+      <div className="animate-fade-up">
         <h1 className="text-xl font-semibold text-foreground">
           Bijna klaar{draft.bill.payerName ? `, ${draft.bill.payerName}` : ""}
         </h1>
@@ -43,7 +43,9 @@ export default async function AccountGatePage({
         </p>
       </div>
 
-      <AccountGateForm billId={code} managerToken={key} klaarHref={klaarHref} />
+      <div className="animate-fade-up" style={{ animationDelay: "100ms" }}>
+        <AccountGateForm billId={code} managerToken={key} klaarHref={klaarHref} />
+      </div>
     </PageShell>
   );
 }

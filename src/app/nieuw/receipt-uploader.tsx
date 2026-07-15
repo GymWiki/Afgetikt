@@ -75,7 +75,7 @@ export function ReceiptUploader({
       />
 
       {preview ? (
-        <div className="overflow-hidden rounded-2xl border border-border">
+        <div className="animate-fade-up overflow-hidden rounded-2xl border border-border">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={preview}
@@ -89,7 +89,7 @@ export function ReceiptUploader({
           onClick={() => cameraInputRef.current?.click()}
           className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-border bg-surface py-14 text-center transition-colors hover:border-brand-400 hover:bg-brand-50/40"
         >
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand-600 animate-pop">
             <Camera size={26} strokeWidth={2} />
           </div>
           <div>

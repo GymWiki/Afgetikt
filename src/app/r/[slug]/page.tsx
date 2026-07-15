@@ -19,7 +19,7 @@ export default async function RestaurantQrLandingPage({
 
   return (
     <PageShell className="gap-6">
-      <div>
+      <div className="animate-fade-up">
         <div className="mb-1 text-sm font-semibold tracking-wide text-brand-600">
           {restaurant.name}
         </div>
@@ -32,7 +32,9 @@ export default async function RestaurantQrLandingPage({
         </p>
       </div>
 
-      <ReceiptUploader restaurantId={restaurant.id} />
+      <div className="animate-fade-up" style={{ animationDelay: "80ms" }}>
+        <ReceiptUploader restaurantId={restaurant.id} />
+      </div>
 
       <form action={startManualBillAction} className="text-center">
         <input type="hidden" name="restaurantId" value={restaurant.id} />

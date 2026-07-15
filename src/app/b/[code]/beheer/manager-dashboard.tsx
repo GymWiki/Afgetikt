@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { formatCents } from "@/lib/money";
+import { staggerDelay } from "@/lib/motion";
 import { calculateSplit, type SplitItem, type SplitItemClaim } from "@/lib/split";
 import { Check, Copy } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -91,19 +92,19 @@ export function ManagerDashboard({
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-2xl border border-border bg-surface p-4">
+        <div className="animate-fade-up rounded-2xl border border-border bg-surface p-4" style={staggerDelay(0, 60)}>
           <div className="text-xs text-muted">Ontvangen</div>
           <div className="text-base font-semibold tabular-nums text-foreground">
             {formatCents(receivedCents)}
           </div>
         </div>
-        <div className="rounded-2xl border border-border bg-surface p-4">
+        <div className="animate-fade-up rounded-2xl border border-border bg-surface p-4" style={staggerDelay(1, 60)}>
           <div className="text-xs text-muted">Nog open</div>
           <div className="text-base font-semibold tabular-nums text-foreground">
             {formatCents(outstandingCents)}
           </div>
         </div>
-        <div className="rounded-2xl border border-border bg-surface p-4">
+        <div className="animate-fade-up rounded-2xl border border-border bg-surface p-4" style={staggerDelay(2, 60)}>
           <div className="text-xs text-muted">Betaald</div>
           <div className="text-base font-semibold tabular-nums text-foreground">
             {paidCount} / {others.length}
@@ -128,13 +129,17 @@ export function ManagerDashboard({
               Nog niemand heeft de link geopend.
             </li>
           )}
-          {others.map((p) => {
+          {others.map((p, index) => {
             const total = split.perParticipant.find(
               (s) => s.participantId === p.id,
             );
             const hasChosen = (total?.itemsSubtotalCents ?? 0) > 0;
             return (
-              <li key={p.id} className="flex items-center gap-3 px-4 py-3.5">
+              <li
+                key={p.id}
+                className="flex animate-fade-up items-center gap-3 px-4 py-3.5"
+                style={staggerDelay(index, 40)}
+              >
                 <div className="min-w-0 flex-1">
                   <div className="text-[15px] font-medium text-foreground">
                     {p.name}
@@ -147,13 +152,13 @@ export function ManagerDashboard({
                 </div>
                 <button
                   onClick={() => toggle(p.id, !p.hasPaid)}
-                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors duration-200 ${
                     p.hasPaid
                       ? "bg-brand-500 text-white"
                       : "bg-red-50 text-red-700 hover:bg-red-100"
                   }`}
                 >
-                  {p.hasPaid && <Check size={14} strokeWidth={3} />}
+                  {p.hasPaid && <Check size={14} strokeWidth={3} className="animate-pop" />}
                   {p.hasPaid ? "Betaald" : "Nog niet"}
                 </button>
               </li>

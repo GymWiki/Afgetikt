@@ -31,7 +31,7 @@ export default async function NieuwePage({
         Terug
       </Link>
 
-      <div>
+      <div className="animate-fade-up">
         <h1 className="text-xl font-semibold text-foreground">
           Nieuwe rekening
         </h1>
@@ -41,8 +41,11 @@ export default async function NieuwePage({
       </div>
 
       {outOfCredits ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-surface p-8 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-amber-700">
+        <div
+          className="flex animate-fade-up flex-col items-center gap-3 rounded-2xl border border-border bg-surface p-8 text-center"
+          style={{ animationDelay: "80ms" }}
+        >
+          <div className="flex h-12 w-12 animate-pop items-center justify-center rounded-full bg-amber-50 text-amber-700">
             <TicketX size={22} strokeWidth={2} />
           </div>
           <div>
@@ -64,7 +67,9 @@ export default async function NieuwePage({
         </div>
       ) : (
         <>
-          <ReceiptUploader restaurantId={restaurantId} />
+          <div className="animate-fade-up" style={{ animationDelay: "80ms" }}>
+            <ReceiptUploader restaurantId={restaurantId} />
+          </div>
 
           <form action={startManualBillAction} className="text-center">
             {restaurantId && (

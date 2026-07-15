@@ -12,7 +12,7 @@ export default async function RegistrerenPage({
 
   return (
     <PageShell className="gap-6">
-      <div>
+      <div className="animate-fade-up">
         <h1 className="text-xl font-semibold text-foreground">
           Maak een account
         </h1>
@@ -21,7 +21,9 @@ export default async function RegistrerenPage({
         </p>
       </div>
 
-      <RegisterForm next={safeNext} />
+      <div className="animate-fade-up" style={{ animationDelay: "80ms" }}>
+        <RegisterForm next={safeNext} />
+      </div>
 
       <p className="text-center text-sm text-muted">
         Al een account?{" "}

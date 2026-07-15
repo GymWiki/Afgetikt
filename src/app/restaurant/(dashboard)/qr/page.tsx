@@ -18,7 +18,7 @@ export default async function QrPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div>
+      <div className="animate-fade-up">
         <h1 className="text-xl font-semibold text-foreground">Jouw QR-code</h1>
         <p className="mt-1 text-[15px] text-muted">
           Zet deze op tafel of bij de kassa. Gasten scannen, fotograferen de
@@ -27,7 +27,10 @@ export default async function QrPage() {
         </p>
       </div>
 
-      <div className="flex flex-col items-center gap-4 rounded-2xl border border-border bg-surface p-8">
+      <div
+        className="flex animate-fade-up flex-col items-center gap-4 rounded-2xl border border-border bg-surface p-8"
+        style={{ animationDelay: "80ms" }}
+      >
         <div
           className="h-56 w-56"
           dangerouslySetInnerHTML={{ __html: svg }}
@@ -35,7 +38,7 @@ export default async function QrPage() {
         <div className="text-sm text-muted">{url}</div>
       </div>
 
-      <div className="flex flex-col gap-2 sm:flex-row">
+      <div className="flex animate-fade-up flex-col gap-2 sm:flex-row" style={{ animationDelay: "140ms" }}>
         <a href={downloadHref} download={`afgetikt-qr-${restaurant.slug}.svg`}>
           <Button variant="secondary" className="w-full">
             QR-code downloaden (SVG)
