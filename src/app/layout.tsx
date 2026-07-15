@@ -15,22 +15,42 @@ const geistMono = Geist_Mono({
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
+const title = "Afgetikt — Rekening splitsen door je bon te scannen";
+const description =
+  "Scan de bon, deel de link, iedereen tikt zijn eigen items aan. Verdeel de rekening met vrienden zonder rekenwerk of Tikkies achteraf. Probeer gratis.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: "Afgetikt — de rekening splitsen zonder gedoe",
+    default: title,
     template: "%s — Afgetikt",
   },
-  description:
-    "Fotografeer de bon, deel de link, iedereen kiest zijn eigen producten. Afgetikt rekent de rest automatisch uit.",
+  description,
   manifest: "/manifest.webmanifest",
   openGraph: {
-    title: "Afgetikt — de rekening splitsen zonder gedoe",
-    description:
-      "Fotografeer de bon, deel de link, iedereen kiest zijn eigen producten.",
+    title,
+    description,
+    url: baseUrl,
+    siteName: "Afgetikt",
     locale: "nl_NL",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+  },
+};
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "GymWiki",
+  alternateName: "Afgetikt",
+  url: baseUrl,
+  email: "info@afgetikt.nl",
+  identifier: "97351911",
+  vatID: "NL005266843B58",
 };
 
 export const viewport: Viewport = {
@@ -51,6 +71,10 @@ export default function RootLayout({
       className={`${plexSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
         {/* Scroll-onthullingen (zie components/ui/reveal.tsx) starten
             onzichtbaar en wachten op JS om te tonen. Zonder JS — of als een
             crawler nooit scrolt — mag content nooit permanent verborgen
