@@ -249,13 +249,29 @@ export async function getBillsForOwner(
   }));
 }
 
+// Haalt de claims op via een join op bill_items in plaats van via een
+// itemId-lijst, zodat deze query niet hoeft te wachten op het items-
+// resultaat en gewoon met de rest mee kan in Promise.all.
+function claimsForBill(billId: string) {
+  return db
+    .select({
+      id: itemClaims.id,
+      itemId: itemClaims.itemId,
+      participantId: itemClaims.participantId,
+      quantity: itemClaims.quantity,
+    })
+    .from(itemClaims)
+    .innerJoin(billItems, eq(itemClaims.itemId, billItems.id))
+    .where(eq(billItems.billId, billId));
+}
+
 export async function getOpenBillPublic(billId: string) {
   const bill = await db.query.bills.findFirst({
     where: and(eq(bills.id, billId), eq(bills.status, "open")),
   });
   if (!bill) return null;
 
-  const [items, billParticipants] = await Promise.all([
+  const [items, billParticipants, claims] = await Promise.all([
     db.query.billItems.findMany({
       where: eq(billItems.billId, billId),
       orderBy: (t, { asc }) => asc(t.position),
@@ -263,15 +279,8 @@ export async function getOpenBillPublic(billId: string) {
     db.query.participants.findMany({
       where: eq(participants.billId, billId),
     }),
+    claimsForBill(billId),
   ]);
-
-  const claims = await db.query.itemClaims.findMany({
-    where: (t, { inArray }) =>
-      inArray(
-        t.itemId,
-        items.map((i) => i.id),
-      ),
-  });
 
   return { bill, items, participants: billParticipants, claims };
 }
@@ -403,7 +412,7 @@ export async function getBillForManager(billId: string, managerToken: string) {
   const bill = await requireManagedBill(billId, managerToken);
   if (!bill) return null;
 
-  const [items, billParticipants] = await Promise.all([
+  const [items, billParticipants, claims] = await Promise.all([
     db.query.billItems.findMany({
       where: eq(billItems.billId, billId),
       orderBy: (t, { asc }) => asc(t.position),
@@ -411,15 +420,8 @@ export async function getBillForManager(billId: string, managerToken: string) {
     db.query.participants.findMany({
       where: eq(participants.billId, billId),
     }),
+    claimsForBill(billId),
   ]);
-
-  const claims = await db.query.itemClaims.findMany({
-    where: (t, { inArray }) =>
-      inArray(
-        t.itemId,
-        items.map((i) => i.id),
-      ),
-  });
 
   return { bill, items, participants: billParticipants, claims };
 }

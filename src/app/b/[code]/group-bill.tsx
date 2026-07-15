@@ -9,11 +9,11 @@ import {
   storeParticipantToken,
 } from "@/lib/client-session";
 import { formatCents, formatCentsForClipboard } from "@/lib/money";
+import { useLiveRefresh } from "@/hooks/use-live-refresh";
 import { staggerDelay } from "@/lib/motion";
 import { calculateSplit, type SplitItemClaim } from "@/lib/split";
 import { Check, ExternalLink, Loader2, Minus, Plus } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { joinBillAction, markSelfPaidAction, setClaimQuantityAction } from "./actions";
 
@@ -54,7 +54,6 @@ export function GroupBill({
   initialParticipants: GroupParticipant[];
   initialClaimsByItem: Record<string, SplitItemClaim[]>;
 }) {
-  const router = useRouter();
   // Start altijd als "onbekend" op de server, en pas pas na hydratie de
   // localStorage-sessie in (anders ontstaat er een SSR/CSR mismatch).
   const [session, setSession] = useState<{
@@ -86,10 +85,8 @@ export function GroupBill({
 
   // Live-ish: elke paar seconden verse data ophalen zodat je ziet wat
   // anderen aan tafel kiezen of betalen, zonder zelf te hoeven verversen.
-  useEffect(() => {
-    const interval = setInterval(() => router.refresh(), LIVE_REFRESH_MS);
-    return () => clearInterval(interval);
-  }, [router]);
+  // Pauzeert vanzelf terwijl het tabblad niet zichtbaar is.
+  useLiveRefresh(LIVE_REFRESH_MS);
 
   useEffect(() => {
     // Nieuwe server-props na een live-refresh moeten de lokale kopie
@@ -248,6 +245,9 @@ export function GroupBill({
           onClick={() => {
             clearParticipant(billId);
             setMe(null);
+            // Anders staat de vorige naam nog in het veld voor de volgende
+            // deelnemer die op dit toestel meedoet.
+            setNameInput("");
           }}
         >
           Wissel

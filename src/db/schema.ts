@@ -1,6 +1,7 @@
 import { relations, sql } from "drizzle-orm";
 import {
   boolean,
+  index,
   integer,
   pgTable,
   text,
@@ -21,84 +22,114 @@ export type SubscriptionPlan = (typeof subscriptionPlanValues)[number];
 
 // bills.restaurantId blijft null voor niet-partnerrestaurants (bon buiten
 // een QR-scan om verwerkt).
-export const restaurants = pgTable("restaurants", {
-  id: text("id").primaryKey(),
-  // Supabase Auth user id (auth.users.id) van de restauranteigenaar. Eén
-  // account kan meerdere restaurants beheren, dus geen unique-constraint.
-  ownerUserId: text("owner_user_id").notNull(),
-  name: text("name").notNull(),
-  slug: text("slug").notNull().unique(),
-  subscriptionStatus: text("subscription_status", {
-    enum: subscriptionStatusValues,
-  })
-    .notNull()
-    .default("trialing"),
-  subscriptionPlan: text("subscription_plan", { enum: subscriptionPlanValues }),
-  trialEndsAt: timestamp("trial_ends_at", { withTimezone: true })
-    .notNull()
-    .default(sql`(now() + interval '30 days')`),
-  mollieCustomerId: text("mollie_customer_id"),
-  mollieSubscriptionId: text("mollie_subscription_id"),
-  currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const restaurants = pgTable(
+  "restaurants",
+  {
+    id: text("id").primaryKey(),
+    // Supabase Auth user id (auth.users.id) van de restauranteigenaar. Eén
+    // account kan meerdere restaurants beheren, dus geen unique-constraint.
+    ownerUserId: text("owner_user_id").notNull(),
+    name: text("name").notNull(),
+    slug: text("slug").notNull().unique(),
+    subscriptionStatus: text("subscription_status", {
+      enum: subscriptionStatusValues,
+    })
+      .notNull()
+      .default("trialing"),
+    subscriptionPlan: text("subscription_plan", {
+      enum: subscriptionPlanValues,
+    }),
+    trialEndsAt: timestamp("trial_ends_at", { withTimezone: true })
+      .notNull()
+      .default(sql`(now() + interval '30 days')`),
+    mollieCustomerId: text("mollie_customer_id"),
+    mollieSubscriptionId: text("mollie_subscription_id"),
+    currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    // getRestaurantsByOwner() draait op elke restaurant-dashboardpagina;
+    // zonder index is dit een full table scan (owner_user_id is sinds de
+    // multi-restaurant-migratie niet meer uniek).
+    index("restaurants_owner_user_id_idx").on(table.ownerUserId),
+    index("restaurants_mollie_subscription_id_idx").on(
+      table.mollieSubscriptionId,
+    ),
+  ],
+);
 
 export const billStatusValues = ["draft", "open"] as const;
 export type BillStatus = (typeof billStatusValues)[number];
 
-export const bills = pgTable("bills", {
-  // Het id is tevens de publieke, niet-raadbare code in de deel-URL (/b/[id]).
-  id: text("id").primaryKey(),
-  // Los geheim nodig om bij /b/[id]/beheer te komen; nooit gedeeld met deelnemers.
-  managerToken: text("manager_token").notNull().unique(),
-  restaurantId: text("restaurant_id").references(() => restaurants.id),
-  // Supabase Auth user id van de hoofdbetaler, pas bekend zodra die (vlak
-  // voor delen) een account aanmaakt of inlogt. Null voor bonnen van vóór
-  // het dashboard, of als het account-moment nooit is afgerond.
-  ownerUserId: text("owner_user_id"),
-  title: text("title"),
-  payerName: text("payer_name"),
-  paymentLink: text("payment_link"),
-  serviceCents: integer("service_cents").notNull().default(0),
-  status: text("status", { enum: billStatusValues })
-    .notNull()
-    .default("draft"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const bills = pgTable(
+  "bills",
+  {
+    // Het id is tevens de publieke, niet-raadbare code in de deel-URL (/b/[id]).
+    id: text("id").primaryKey(),
+    // Los geheim nodig om bij /b/[id]/beheer te komen; nooit gedeeld met deelnemers.
+    managerToken: text("manager_token").notNull().unique(),
+    restaurantId: text("restaurant_id").references(() => restaurants.id),
+    // Supabase Auth user id van de hoofdbetaler, pas bekend zodra die (vlak
+    // voor delen) een account aanmaakt of inlogt. Null voor bonnen van vóór
+    // het dashboard, of als het account-moment nooit is afgerond.
+    ownerUserId: text("owner_user_id"),
+    title: text("title"),
+    payerName: text("payer_name"),
+    paymentLink: text("payment_link"),
+    serviceCents: integer("service_cents").notNull().default(0),
+    status: text("status", { enum: billStatusValues })
+      .notNull()
+      .default("draft"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("bills_restaurant_id_idx").on(table.restaurantId),
+    // Gebruikt door getBillsForOwner() op /dashboard.
+    index("bills_owner_user_id_idx").on(table.ownerUserId),
+  ],
+);
 
-export const billItems = pgTable("bill_items", {
-  id: text("id").primaryKey(),
-  billId: text("bill_id")
-    .notNull()
-    .references(() => bills.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  priceCents: integer("price_cents").notNull(),
-  quantity: integer("quantity").notNull().default(1),
-  position: integer("position").notNull().default(0),
-});
+export const billItems = pgTable(
+  "bill_items",
+  {
+    id: text("id").primaryKey(),
+    billId: text("bill_id")
+      .notNull()
+      .references(() => bills.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    priceCents: integer("price_cents").notNull(),
+    quantity: integer("quantity").notNull().default(1),
+    position: integer("position").notNull().default(0),
+  },
+  (table) => [index("bill_items_bill_id_idx").on(table.billId)],
+);
 
-export const participants = pgTable("participants", {
-  id: text("id").primaryKey(),
-  billId: text("bill_id")
-    .notNull()
-    .references(() => bills.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  // Geheim token, opgeslagen in localStorage van de deelnemer, om hun eigen
-  // keuzes te mogen wijzigen zonder account.
-  accessToken: text("access_token").notNull().unique(),
-  isPayer: boolean("is_payer").notNull().default(false),
-  hasPaid: boolean("has_paid").notNull().default(false),
-  joinedAt: timestamp("joined_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const participants = pgTable(
+  "participants",
+  {
+    id: text("id").primaryKey(),
+    billId: text("bill_id")
+      .notNull()
+      .references(() => bills.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    // Geheim token, opgeslagen in localStorage van de deelnemer, om hun eigen
+    // keuzes te mogen wijzigen zonder account.
+    accessToken: text("access_token").notNull().unique(),
+    isPayer: boolean("is_payer").notNull().default(false),
+    hasPaid: boolean("has_paid").notNull().default(false),
+    joinedAt: timestamp("joined_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("participants_bill_id_idx").on(table.billId)],
+);
 
 export const itemClaims = pgTable(
   "item_claims",

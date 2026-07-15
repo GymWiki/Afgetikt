@@ -15,17 +15,21 @@ export default async function AccountGatePage({
   const { key, pid, ptoken } = await searchParams;
   if (!key || !pid || !ptoken) notFound();
 
-  const draft = await getDraftBillForEdit(code, key);
+  // Onafhankelijk van elkaar: de bon-lookup en de sessie-check hoeven niet
+  // op elkaar te wachten.
+  const supabase = await createSupabaseServerClient();
+  const [draft, {
+    data: { user },
+  }] = await Promise.all([
+    getDraftBillForEdit(code, key),
+    supabase.auth.getUser(),
+  ]);
   if (!draft) notFound();
 
   const klaarHref = `/nieuw/${code}/klaar?key=${key}&pid=${pid}&ptoken=${ptoken}`;
 
   // Al ingelogd (bv. tweede tabblad, of eerder deze sessie): meteen
   // koppelen en doorgaan, geen formulier nodig.
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
   if (user) {
     await claimBill(code, key, user.id);
     redirect(klaarHref);

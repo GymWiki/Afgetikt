@@ -1,11 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useLiveRefresh } from "@/hooks/use-live-refresh";
 import { formatCents } from "@/lib/money";
 import { staggerDelay } from "@/lib/motion";
 import { calculateSplit, type SplitItem, type SplitItemClaim } from "@/lib/split";
 import { Check, Copy } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { togglePaidAction } from "./actions";
 
@@ -35,15 +35,12 @@ export function ManagerDashboard({
   claimsByItem: Record<string, SplitItemClaim[]>;
   serviceCents: number;
 }) {
-  const router = useRouter();
   const [participants, setParticipants] = useState(initialParticipants);
   const [copied, setCopied] = useState(false);
   const [, startTransition] = useTransition();
 
-  useEffect(() => {
-    const interval = setInterval(() => router.refresh(), LIVE_REFRESH_MS);
-    return () => clearInterval(interval);
-  }, [router]);
+  // Pauzeert vanzelf terwijl het tabblad niet zichtbaar is.
+  useLiveRefresh(LIVE_REFRESH_MS);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
