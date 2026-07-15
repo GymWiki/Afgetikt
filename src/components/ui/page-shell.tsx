@@ -19,7 +19,7 @@ export function PageShell({
   return (
     <div
       className={cn(
-        "mx-auto flex w-full max-w-md flex-1 flex-col px-5 py-8",
+        "mx-auto flex w-full max-w-md flex-1 flex-col px-5 py-8 animate-fade-in",
         className,
       )}
       {...props}

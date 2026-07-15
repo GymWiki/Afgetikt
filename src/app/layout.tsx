@@ -51,6 +51,13 @@ export default function RootLayout({
       className={`${plexSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        {/* Scroll-onthullingen (zie components/ui/reveal.tsx) starten
+            onzichtbaar en wachten op JS om te tonen. Zonder JS — of als een
+            crawler nooit scrolt — mag content nooit permanent verborgen
+            blijven, dus forceer zichtbaarheid als noscript-vangnet. */}
+        <noscript>
+          <style>{`[data-reveal] { opacity: 1 !important; transform: none !important; }`}</style>
+        </noscript>
         {children}
       </body>
     </html>
