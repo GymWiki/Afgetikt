@@ -111,7 +111,7 @@ const faqItems = [
   {
     question: "Is Afgetikt gratis?",
     answer:
-      "Ja. Als hoofdbetaler krijg je 3 gratis bonnen. Daarna koop je eenmalig een pakket bij vanaf €1,99 — meedoen aan de rekening van iemand anders is voor je tafelgenoten altijd gratis.",
+      "Ja. Als hoofdbetaler krijg je 3 gratis bonnen. Daarna koop je eenmalig een pakket bij, vanaf 5 cent per bon bij het grootste pakket — meedoen aan de rekening van iemand anders is voor je tafelgenoten altijd gratis.",
   },
   {
     question: "Moet iedereen een account aanmaken?",
@@ -155,7 +155,7 @@ const webApplicationJsonLd = {
     price: "0",
     priceCurrency: "EUR",
     description:
-      "3 gratis bonnen voor de hoofdbetaler, daarna eenmalige pakketten vanaf €1,99. Meedoen aan een rekening is altijd gratis.",
+      "3 gratis bonnen voor de hoofdbetaler, daarna eenmalige pakketten vanaf 5 cent per bon. Meedoen aan een rekening is altijd gratis.",
   },
 };
 
